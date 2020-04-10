@@ -2,28 +2,25 @@
   "schemaVersion": 1,
   "id": "modid",
   "version": "${version}",
-
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "Actionale",
+  "description": "Actionale is a mod that replaces vanilla keybinds with a easily composable action system.",
   "authors": [
-    "Me!"
+    "hnOsmium0001"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://curseforge.com/minecraft/mc-mods/actionale",
+    "sources": "https://github.com/hnOsmium0001/Actionale"
   },
-
-  "license": "CC0-1.0",
+  "license": "MIT",
   "icon": "assets/modid/icon.png",
-
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.fabricmc.example.ExampleMod"
+      "io.github.hnosmium0001.actionale.Actionale"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
+    "common.mixins.json"
   ],
 
   "depends": {
