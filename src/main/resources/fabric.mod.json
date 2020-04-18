@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "actionale",
   "version": "${version}",
   "name": "Actionale",
   "description": "Actionale is a mod that replaces vanilla keybinds with a easily composable action system.",
