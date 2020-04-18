@@ -2,6 +2,7 @@ package io.github.hnosmium0001.actionale.action.impl
 
 import io.github.hnosmium0001.actionale.action.Action
 import io.github.hnosmium0001.actionale.action.Key
+import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN
 
 interface ILocationNode {
@@ -21,7 +22,7 @@ private class LocationNode(
 }
 
 private class RootLocationNode : ILocationNode {
-    override val key = GLFW_KEY_UNKNOWN
+    override val key = InputUtil.Type.KEYSYM.createFromCode(GLFW_KEY_UNKNOWN)
     override var parent: ILocationNode? = null
     override var children: MutableMap<Key, ILocationNode> = HashMap()
     override var action: Action? = null
@@ -30,9 +31,6 @@ private class RootLocationNode : ILocationNode {
 class ActionLocator {
     private val root = RootLocationNode()
 
-    /**
-     * Current input pointer. When `null`, it indicates no inputs are received.
-     */
     private var pointer: ILocationNode = root
     private var idleTime = 0L
 

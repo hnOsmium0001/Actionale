@@ -1,18 +1,16 @@
 package io.github.hnosmium0001.actionale.action
 
-import io.github.hnosmium0001.actionale.toDotSeparated
-import net.minecraft.util.Identifier
+import net.fabricmc.fabric.api.client.keybinding.FabricKeyBinding
+import net.minecraft.client.options.KeyBinding
 
 data class Category(
-        val name: Identifier,
-        val trKey: String = "action.categories.${name.toDotSeparated()}"
+        val name: String
 )
 
 class Action(
-        val name: Identifier,
-        val category: Identifier,
-        val keyChord: KeyChord,
-        val trKey: String = "action.${name.toDotSeparated()}"
+        val name: String,
+        val category: String,
+        val keyChord: KeyChord
 ) {
     val callbacks = ArrayList<() -> Unit>()
 
@@ -23,5 +21,6 @@ class Action(
     }
 }
 
-// TODO
-//fun KeyBinding.toAction() = Action(id, KeyChord(), category)
+fun KeyBinding.toKeyChord() = KeyChord(Array(1) { defaultKeyCode })
+fun KeyBinding.toAction() = Action(name, category, toKeyChord())
+fun FabricKeyBinding.toAction() = Action(name, category, toKeyChord())

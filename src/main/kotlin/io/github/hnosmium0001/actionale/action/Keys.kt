@@ -1,16 +1,15 @@
 package io.github.hnosmium0001.actionale.action
 
 import net.minecraft.client.resource.language.I18n
+import net.minecraft.client.util.InputUtil
 
-/**
- * Alias meant to mean GLFW's key code
- */
-typealias Key = Int
+typealias Key = InputUtil.KeyCode
 
 enum class KeyAction(val trKey: String) {
     PRESS("key.action.press"),
     RELEASE("key.action.release"),
-    BOTH("key.action.both");
+    BOTH("key.action.both"),
+    HOLD("key.action.hold");
 
     fun localize(): String = I18n.translate(trKey)
 }
