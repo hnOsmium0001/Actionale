@@ -56,5 +56,9 @@ class KeyChord(val keys: Array<Key>) {
 object KeyChordManager {
     private val keyChords: MutableMap<Array<Key>, KeyChord> = HashMap()
 
-    fun obtainKeyChord(keys: Array<Key>) = keyChords.getOrPut(keys) { KeyChord(keys) }
+    fun obtainKeyChord(keys: Array<Key>) = keyChords.getOrPut(keys) {
+        return KeyChord(keys).also {
+            TriggerTree.addNodesFor(it)
+        }
+    }
 }

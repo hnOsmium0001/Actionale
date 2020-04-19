@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "actionale_testmod",
+  "version": "${version}",
+  "name": "Actionale Test mod",
+  "description": "Test mod for Actionale",
+  "authors": [
+    "hnOsmium0001"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      {
+        "adapter": "kotlin",
+        "value": "io.github.hnosmium0001.actionale.testmod.ActionaleTestMod"
+      }
+    ]
+  },
+  "mixins": [
+  ],
+  "depends": {
+    "fabricloader": ">=0.7.4",
+    "fabric": "*",
+    "fabric-language-kotlin": ">=1.3.50",
+    "minecraft": "1.15.x",
+    "actionale": "*"
+  },
+  "suggests": {
+    "flamingo": "*"
+  }
+}

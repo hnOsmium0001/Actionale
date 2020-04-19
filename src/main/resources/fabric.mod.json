@@ -9,18 +9,22 @@
   ],
   "contact": {
     "homepage": "https://curseforge.com/minecraft/mc-mods/actionale",
-    "sources": "https://github.com/hnOsmium0001/Actionale"
+    "sources": "https://github.com/hnOsmium0001/Actionale",
+    "issues": "https://github.com/hnOsmium0001/Actionale/issues"
   },
   "license": "MIT",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/actionale/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "io.github.hnosmium0001.actionale.ActionaleInitializer"
+      {
+        "adapter": "kotlin",
+        "value": "io.github.hnosmium0001.actionale.Actionale"
+      }
     ]
   },
   "mixins": [
-    "common.mixins.json"
+    "mixins.actionale.json"
   ],
   "depends": {
     "fabricloader": ">=0.7.4",
@@ -29,6 +33,5 @@
     "minecraft": "1.15.x"
   },
   "suggests": {
-    "flamingo": "*"
   }
 }
