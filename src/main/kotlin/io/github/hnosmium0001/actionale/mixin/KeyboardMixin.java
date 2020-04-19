@@ -17,6 +17,5 @@ public class KeyboardMixin {
     )
     public void onKey(long window, int keyCode, int scancode, int action, int mods) {
         KeyInputCallback.BUS.invoker().invoke(keyCode, scancode, action, mods);
-        InputManager.INSTANCE.setKeyStatus(InputUtil.getKeyCode(keyCode, scancode), action);
     }
 }
