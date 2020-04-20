@@ -1,16 +1,14 @@
-# Fabric Example Mod
+[![Available Versions](http://cf.way2muchnoise.eu/versions/actionale.svg)](https://www.curseforge.com/minecraft/mc-mods/actionale)
+[![Downloads](http://cf.way2muchnoise.eu/full_actionale_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/actionale)
 
-## Setup
+# Actionale
 
-1. Edit build.gradle and mod.json to suit your needs.
-    * The "mixins" object can be removed from mod.json if you do not need to use mixins.
-    * Please replace all occurences of "modid" with your own mod ID - sometimes, a different string may also suffice.
-2. Run the following command:
+Actionale is a Minecraft Mod that replaces vanilla's keybinds system with a more sophisticated keymap/action system.
+It is completely compatible with any modded vanilla keybinds (they will automatically transfer to Actionale's keymaps
+and actions), and modders can optionally add support for Actionale.
 
-```
-./gradlew idea
-```
+---
 
-## License
-
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+### FAQ
+- Q: How do you pronounce this mod's name?  
+  A: It should be pronounced `action-ale`, but I wouldn't be angry if you choose whatever you want.  
