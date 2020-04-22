@@ -15,16 +15,16 @@ object ActionaleTestMod : ModInitializer {
     val logger = LogManager.getLogger(MODID)
 
     override fun onInitialize() {
-        KeyInputCallback.BUS.register(KeyInputCallback { keyCode, scancode, action, mods ->
+        KeyInputCallback.EVENT.register(KeyInputCallback { keyCode, scancode, action, mods ->
             logger.info("Key pressed: $keyCode, scancode: $scancode, action: $action, mods: $mods")
         })
-        MouseInputCallback.BUS.register(MouseInputCallback { button, action, mods ->
+        MouseInputCallback.EVENT.register(MouseInputCallback { button, action, mods ->
             logger.info("Mouse button: $button, action: $action, mods: $mods")
         })
 
-        val ctrlJ = KeyChordManager.obtainKeyChord(arrayOf(
-                InputUtil.getKeyCode(GLFW.GLFW_KEY_LEFT_CONTROL, -1),
-                InputUtil.getKeyCode(GLFW.GLFW_KEY_J, -1)
+        val ctrlJ = KeyChordManager.obtain(arrayOf(
+            InputUtil.getKeyCode(GLFW.GLFW_KEY_LEFT_CONTROL, -1),
+            InputUtil.getKeyCode(GLFW.GLFW_KEY_J, -1)
         ))
         ctrlJ.listeners.add { _, action ->
             println("Keychord Ctrl+J triggered as $action")

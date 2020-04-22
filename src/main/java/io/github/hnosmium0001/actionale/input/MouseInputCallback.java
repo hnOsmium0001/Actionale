@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.event.EventFactory;
 @FunctionalInterface
 public interface MouseInputCallback {
 
-    public static Event<MouseInputCallback> BUS = EventFactory.createArrayBacked(
+    public static Event<MouseInputCallback> EVENT = EventFactory.createArrayBacked(
             MouseInputCallback.class,
             listeners -> (button, action, mods) -> {
                 for (MouseInputCallback listener : listeners) {

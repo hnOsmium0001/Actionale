@@ -17,7 +17,7 @@ public class MixinKeyboard {
             at = @At(value = "INVOKE", target = "net.minecraft.client.options.KeyBinding.setKeyPressed(Lnet/minecraft/client/util/InputUtil$KeyCode;Z)V")
     )
     public void onKey(long window, int keyCode, int scancode, int action, int mods, CallbackInfo info) {
-        KeyInputCallback.BUS.invoker().invoke(keyCode, scancode, action, mods);
+        KeyInputCallback.EVENT.invoker().invoke(keyCode, scancode, action, mods);
         InputManager.INSTANCE.setKeyStatus(InputUtil.getKeyCode(keyCode, scancode), action);
     }
 }

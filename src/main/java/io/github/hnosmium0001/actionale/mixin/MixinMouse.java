@@ -17,7 +17,7 @@ public class MixinMouse {
             at = @At(value = "INVOKE", target = "net.minecraft.client.options.KeyBinding.setKeyPressed(Lnet/minecraft/client/util/InputUtil$KeyCode;Z)V")
     )
     public void onMouseButton(long window, int button, int action, int mods, CallbackInfo info) {
-        MouseInputCallback.BUS.invoker().invoke(button, action, mods);
+        MouseInputCallback.EVENT.invoker().invoke(button, action, mods);
         InputManager.INSTANCE.setKeyStatus(InputUtil.Type.MOUSE.createFromCode(button), action);
     }
 }

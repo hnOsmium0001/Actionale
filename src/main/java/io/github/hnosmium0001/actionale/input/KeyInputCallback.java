@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.event.EventFactory;
 @FunctionalInterface
 public interface KeyInputCallback {
 
-    public static Event<KeyInputCallback> BUS = EventFactory.createArrayBacked(
+    public static Event<KeyInputCallback> EVENT = EventFactory.createArrayBacked(
             KeyInputCallback.class,
             listeners -> (keyCode, scancode, action, mods) -> {
                 for (KeyInputCallback listener : listeners) {
