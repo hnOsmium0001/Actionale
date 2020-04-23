@@ -1,56 +1,57 @@
 package io.github.hnosmium0001.actionale
 
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.Tag
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import net.minecraft.util.Identifier
 
 fun Identifier.toDotSeparated() = this.toString().replace(':', '.')
 
-fun CompoundTag.putIdentifier(key: String, value: Identifier) {
-    putString(key, value.toString())
+fun JsonObject.addProperty(key: String, value: Identifier) {
+    addProperty(key, value.toString())
 }
 
-fun CompoundTag.getIdentifier(key: String): Identifier? {
-    val text = this.getString(key)
-    return if (text.isEmpty()) null else Identifier.tryParse(text)
-}
+val JsonElement.asIdentifier get() = Identifier(this.asString)
 
-inline fun <T, C : Tag> Iterable<T>.pack(packer: (T) -> C) =
-    ListTag().also { list ->
+inline fun <T, C : JsonElement> Iterable<T>.pack(packer: (T) -> C) =
+    JsonArray().also { array ->
+        for (element in this) {
+            array.add(packer.invoke(element))
+        }
+    }
+
+inline fun <T, C : JsonElement> Array<T>.pack(packer: (T) -> C) =
+    JsonArray().also { list ->
         for (element in this) {
             list.add(packer.invoke(element))
         }
     }
 
-inline fun <T, C : Tag> Array<T>.pack(packer: (T) -> C) =
-    ListTag().also { list ->
-        for (element in this) {
-            list.add(packer.invoke(element))
-        }
-    }
-
-inline fun <K, V, C : Tag> Map<K, V>.packMap(packer: (V) -> C) =
-    CompoundTag().also { compound ->
+inline fun <K, V, C : JsonElement> Map<K, V>.packMap(packer: (K, V) -> C) =
+    JsonArray().also { obj ->
         for ((key, value) in this.entries) {
-            compound.put(key.toString(), packer.invoke(value))
+            val entry = JsonObject().apply {
+                addProperty("key", key.toString())
+                add("value", packer.invoke(key, value))
+            }
+            obj.add(entry)
         }
     }
 
-inline fun <T, S : MutableCollection<T>, reified C : Tag> ListTag.unpack(result: S, unpacker: (C) -> T) =
+inline fun <T, S : MutableCollection<T>> JsonArray.unpack(result: S, unpacker: (JsonElement) -> T) =
     result.also {
-        for (compound in this) {
-            result.add(unpacker.invoke(compound as C))
+        for (obj in this) {
+            result.add(unpacker.invoke(obj))
         }
     }
 
-inline fun <reified T, reified C : Tag> ListTag.unpackArray(unpacker: (C) -> T) =
-    Array(this.size) { idx ->
-        unpacker.invoke(this[idx] as C)
+inline fun <reified T> JsonArray.unpackArray(unpacker: (JsonElement) -> T) =
+    Array(this.size()) { idx ->
+        unpacker.invoke(this[idx])
     }
 
-inline fun <T> ListTag.unpackUse(unpacker: CompoundTag.() -> T) {
-    for (compound in this) {
-        unpacker.invoke(compound as CompoundTag)
+inline fun <T> JsonArray.unpackUse(unpacker: JsonObject.() -> T) {
+    for (obj in this) {
+        unpacker.invoke(obj as JsonObject)
     }
 }

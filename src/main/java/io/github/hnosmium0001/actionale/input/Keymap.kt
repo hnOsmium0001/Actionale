@@ -1,28 +1,58 @@
+@file:Suppress("NAME_SHADOWING")
+
 package io.github.hnosmium0001.actionale.input
 
 import com.google.common.base.Preconditions
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
 import io.github.hnosmium0001.actionale.pack
-import io.github.hnosmium0001.actionale.packMap
-import net.fabricmc.fabric.api.util.NbtType
 import net.minecraft.client.options.KeyBinding
 import net.minecraft.client.util.InputUtil
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.ListTag
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
+
+enum class KeymapType(val tag: String) {
+    /**
+     * Keymaps automatically generated from vanilla's KeyBinding. Can be added neither in
+     * code nor in-game.
+     */
+    MIGRATED("#migrated"),
+
+    /**
+     * Keymaps created by mod developers, immutable and can't be changed by players.
+     */
+    DEVELOPER_DEFINED("#developer_defined"),
+
+    /**
+     * Keymaps created by players, this will override both developer-defined keymaps
+     * and migrated KeyBinding keymaps. This is the only keymaps that are persisted on disk.
+     */
+    USER_DEFINED("#user_defined"),
+    ;
+
+    companion object {
+        val types = values() // Cached members array
+        val tag2typeMap: Map<String, KeymapType> = HashMap<String, KeymapType>().apply {
+            for (type in types) {
+                put(type.tag, type)
+            }
+        }
+
+        fun fromTag(tag: String) = tag2typeMap[tag]
+    }
+}
 
 /**
  * A keymap is an ordered combination of different key chords. It is "pressed" when all of the key chords are pressed in
  * the given order, and released when any of the key chords are released.
  *
- * Keymaps have 3 categories:
- * 1. migrated KeyBinding keymaps: keymaps automatically generated from vanilla's KeyBinding. Can be added neither in
- * code nor in-game.
- * 2. developer-defined keymaps: keymaps created by mod developers, immutable and can't be changed by players
- * 3. player-defined keymaps (overrides): keymaps created by players, this will override both developer-defined keymaps
- * and migrated KeyBinding keymaps. This is the only keymaps that are persisted on disk.
+ * @see [KeymapType]
  */
-class Keymap(val combination: Array<KeyChord>) {
+class Keymap(
+    val name: String,
+    val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
+    val combination: Array<KeyChord>
+) {
     /**
      * Listeners to be called whenever this keymap changes state, i.e. from `PRESSED` to `RELEASED` or vice versa. Add
      * or remove listeners according to the need.
@@ -82,30 +112,43 @@ class Keymap(val combination: Array<KeyChord>) {
     }
 }
 
-fun Keymap.serialize() =
-    this.combination.pack { chord ->
-        // KeyChord[]
-        chord.keys.pack { key ->
-            // Key
-            CompoundTag().apply {
-                putInt("Type", key.category.ordinal)
-                putInt("KeyCode", key.keyCode)
-            }
-            // ...
+fun Keymap.serializeCombinations() =
+    // KeyChord[] -> JsonArray
+    combination.pack { chord ->
+        // KeyChord -> JsonObject
+        JsonObject().also { chordData ->
+            // Key[] -> JsonArray
+            chordData.add("keys", chord.keys.pack { key ->
+                // Key -> JsonObject
+                JsonObject().also { keyData ->
+                    keyData.addProperty("type", key.category.ordinal)
+                    keyData.addProperty("key_code", key.keyCode)
+                }
+                // ...
+            })
         }
         // ...
     }
 
-fun deserializeKeymap(data: ListTag) =
-    Keymap(Array(data.size) { chordIdx ->
-        val keysData = data.getList(chordIdx)
-        KeyChordManager.obtain(Array(keysData.size) { keyIdx ->
-            val keyData = keysData.getCompound(keyIdx)
-            val typeID = keyData.getInt("Type")
-            val keyCode = keyData.getInt("KeyCode")
-            InputUtil.Type.values()[typeID].createFromCode(keyCode)
-        })
-    })
+fun deserializeKeymapCombinations(data: JsonArray) =
+    // JsonArray -> KeyChord[]
+    Array(data.size()) { chordIdx ->
+        // JsonObject -> KeyChord
+        data.get(chordIdx).asJsonObject.let { chordData ->
+            val keysData = chordData.get("keys").asJsonArray
+            // JsonArray -> Key[]
+            KeyChordManager.obtain(Array(keysData.size()) { keyIdx ->
+                // JsonObject -> Key
+                keysData.get(keyIdx).asJsonObject.let { keyData ->
+                    val typeID = keyData.get("type").asInt
+                    val keyCode = keyData.get("key_code").asInt
+                    InputUtil.Type.values()[typeID].createFromCode(keyCode)
+                }
+                // ...
+            })
+        }
+        // ...
+    }
 
 object KeymapManager {
     /**
@@ -124,6 +167,10 @@ object KeymapManager {
     /**
      * Player-defined key maps that are persisted onto the disk. The overrides has higher priority than the developer-
      * defined kaymaps when querying and deleting.
+     *
+     * Note: player-defined overrides are meant to be used in combination with radial action menus. Their callbacks are
+     * reattached by radial menus after deserialization. If developers make use of overrides, they need to reattach
+     * callbacks to the overrides after deserialization too since lambdas can't be serialized (easily).
      */
     // Modified by users through GUI
     val keymapOverrides: MutableMap<String, Keymap> = HashMap()
@@ -133,6 +180,8 @@ object KeymapManager {
     }
 
     fun registerKeymap(name: String, keymap: Keymap) {
+        Preconditions.checkArgument(keymap.type == KeymapType.DEVELOPER_DEFINED)
+
         keymaps as MutableMap
         keymaps[name] = keymap
         // If the developer-defined keymap overrides a migrated keymap, we replaced the auto-generated one
@@ -160,21 +209,42 @@ object KeymapManager {
         }
     }
 
-    fun serializeOverrides(): CompoundTag {
-        return keymapOverrides.packMap { keymap ->
-            // (name, Keymap[])
-            keymap.serialize()
+    private fun serializeCategory(keymaps: Map<String, Keymap>): JsonArray {
+        // Map<String, Keymap> -> JsonArray
+        return keymaps.entries.pack { (_, keymap) ->
+            // Keymap -> JsonObject
+            // The `name` map key and the `type` is pretended to be a part of a Keymap
+            JsonObject().also { keymapData ->
+                keymapData.addProperty("name", keymap.name)
+                // Currently discarded, reserved for future uses
+                keymapData.addProperty("type", keymap.type.tag)
+                keymapData.add("combinations", keymap.serializeCombinations())
+            }
             // ...
         }
     }
 
-    fun deserializeOverrides(data: CompoundTag) {
-        for (name in data.keys) {
+    // TODO The `type` property in serialized form would be useless, consider removing it?
+    fun serialize() = serializeCategory(keymapOverrides)
+
+    private fun deserializeCategory(data: JsonArray, keymaps: MutableMap<String, Keymap>) {
+        // JsonArray -> Map<String, Keymap>
+        for (keymapData in data) {
+            // JsonObject -> Keymap
+            // The `name` map key and the `type` is pretended to be a part of a Keymap
+            val keymapData = keymapData.asJsonObject
+            val keymap = Keymap(
+                name = keymapData.get("name").asString,
+                type = KeymapType.fromTag(keymapData.get("type").asString)!!,
+                combination = deserializeKeymapCombinations(keymapData.get("combinations").asJsonArray)
+            )
             // Drop unmapped overrides
-            if (!keymaps.contains(name)) {
-                continue
+            if (keymaps.contains(keymap.name)) {
+                keymaps[keymap.name] = keymap
             }
-            keymapOverrides[name] = deserializeKeymap(data.getList(name, NbtType.COMPOUND))
+            // ...
         }
     }
+
+    fun deserialize(data: JsonArray) = deserializeCategory(data, keymapOverrides)
 }

@@ -1,9 +1,13 @@
 package io.github.hnosmium0001.actionale.action
 
+import com.google.common.base.Preconditions
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import io.github.hnosmium0001.actionale.*
-import net.fabricmc.fabric.api.util.NbtType
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.StringTag
+import io.github.hnosmium0001.actionale.input.InputAction
+import io.github.hnosmium0001.actionale.input.Keymap
+import io.github.hnosmium0001.actionale.input.KeymapManager
 import net.minecraft.util.Identifier
 
 // TODO add support for KeyBinding -> Action
@@ -34,9 +38,17 @@ sealed class Action(
     val id: Identifier,
     var name: String,
     // Record the names instead of direct references to allow player-overrides
-    val keymaps: MutableSet<String> = HashSet()
+    val triggers: MutableSet<String> = HashSet()
 ) {
-    var callback: () -> Unit = {}
+    var callback: (Keymap, InputAction) -> Unit = { keymap, action -> }
+        set(value) {
+            for (name in triggers) {
+                val keymap = KeymapManager[name] ?: continue
+                keymap.listeners.remove(field)
+                keymap.listeners.add(value)
+            }
+            field = value
+        }
 
     override fun toString(): String {
         return "Action(id=$id, name='$name')"
@@ -51,64 +63,83 @@ sealed class Action(
 class RadialMenuAction(
     id: Identifier,
     name: String,
-    keymaps: MutableSet<String> = HashSet(),
+    triggers: MutableSet<String> = HashSet(),
     val subActions: Array<Action>
-) : Action(id, name, keymaps) {
+) : Action(id, name, triggers) {
     init {
         callback = this::openRadialMenu
     }
 
-    fun openRadialMenu() {
+    fun openRadialMenu(keymap: Keymap, action: InputAction) {
         TODO("unimplemented")
     }
 }
 
 fun RadialMenuAction.serialize() =
-    CompoundTag().apply {
-        putIdentifier("ID", id)
-        putString("Name", name)
-        put("Keymaps", keymaps.pack {
-            StringTag.of(it)
+    // RadialMenuAction -> JsonObject
+    JsonObject().also { menuData ->
+        menuData.addProperty("id", id)
+        menuData.addProperty("name", name)
+        // String[] -> JsonArray
+        menuData.add("triggers", triggers.pack { trigger ->
+            JsonPrimitive(trigger)
+            // ...
         })
-        put("SubActions", subActions.pack {
-            StringTag.of(it.id.toString())
+        // Action[] -> JsonArray
+        menuData.add("subactions", subActions.pack { subaction ->
+            // Action -> JsonPrimitive<String>
+            JsonPrimitive(subaction.id.toString())
         })
     }
 
-fun deserializeRadialMenuAction(data: CompoundTag) =
+fun deserializeRadialMenuAction(data: JsonObject) =
+    // JsonObject -> RadialMenuAction
     RadialMenuAction(
-        id = data.getIdentifier("ID")!!,
-        name = data.getString("Name"),
-        keymaps = data.getList("Keymaps", NbtType.STRING).unpack<String, MutableSet<String>, StringTag>(HashSet()) { tag ->
-            tag.asString()
+        id = data.get("id").asIdentifier,
+        name = data.get("name").asString,
+        // JsonArray -> String[]
+        triggers = data.get("triggers").asJsonArray.unpack(HashSet()) { trigger ->
+            trigger.asString
+            // ...
         },
-        subActions = data.getList("SubActions", NbtType.STRING).unpackArray<Action, StringTag> { tag ->
-            val id = Identifier(tag.asString())
+        // JsonArray -> Action[]
+        subActions = data.get("subactions").asJsonArray.unpackArray { subaction ->
+            val id = Identifier(subaction.asString)
             ActionManager.actions[id] ?: error("Invalid serialized data when trying to deserialize RadialMenuAction")
-        })
+            // ...
+        }
+    )
 
 object ActionManager {
     val actions: Map<Identifier, Action> = HashMap()
 
-    fun registerAction(id: Identifier, action: Action) {
+    fun registerAction(action: Action) {
         actions as MutableMap
-        actions[id] = action
+        Preconditions.checkArgument(!actions.containsKey(action.id))
+        actions[action.id] = action
     }
 
-    fun serializeRadialMenus(): CompoundTag {
-        return CompoundTag().apply {
-            for ((id, action) in actions) {
-                if (action is RadialMenuAction) {
-                    put(id.toString(), action.serialize())
-                }
+    fun serializeRadialMenus(): JsonArray {
+        // RadialMenuAction[] -> JsonArray
+        return JsonArray().apply {
+            for ((_, action) in actions) {
+                if (action !is RadialMenuAction) continue
+
+                // Action -> JsonObject
+                add(action.serialize())
+                // ...
             }
         }
     }
 
-    fun deserializeRadialMenus(data: CompoundTag) {
+    fun deserializeRadialMenus(data: JsonArray) {
         actions as MutableMap
-        for (key in data.keys) {
-            actions[Identifier(key)] = deserializeRadialMenuAction(data.getCompound(key))
+        // JsonArray -> RadialMenuAction[]
+        for (menuData in data) {
+            // JsonObject -> RadialMenuAction
+            val menu = deserializeRadialMenuAction(menuData.asJsonObject)
+            actions[menu.id] = menu
+            // ...
         }
     }
 }
