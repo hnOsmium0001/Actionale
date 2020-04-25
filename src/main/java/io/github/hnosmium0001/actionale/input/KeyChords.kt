@@ -42,14 +42,14 @@ class KeyChord internal constructor(val keys: Array<Key>) {
 
     override fun toString(): String {
         return keys.asSequence()
-            .map { it.toIndicatorCode() }
-            .joinToString("-", "<", ">") { it }
+                .map { it.toIndicatorCode() }
+                .joinToString("-", "<", ">") { it }
     }
 
     fun translate(): String {
         return keys.asSequence()
-            .map { it.toIndicatorTranslation() }
-            .joinToString("+") { it }
+                .map { it.toIndicatorTranslation() }
+                .joinToString("+") { it }
     }
 }
 
@@ -58,10 +58,12 @@ object KeyChordManager {
 
     fun obtain(keys: Array<Key>): KeyChord {
         keyChords as MutableMap
-        return keyChords.getOrPut(keys) {
-            KeyChord(keys).also {
-                TriggerTree.addNodesFor(it)
-            }
+        if (keyChords.containsKey(keys)) {
+            return keyChords[keys] ?: error("")
         }
+        val chord = KeyChord(keys)
+        keyChords[keys] = chord
+        TriggerTree.addNodesFor(chord)
+        return chord
     }
 }

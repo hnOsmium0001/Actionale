@@ -14,7 +14,7 @@
   },
   "license": "MIT",
   "icon": "assets/actionale/icon.png",
-  "environment": "*",
+  "environment": "client",
   "entrypoints": {
     "main": [
       {

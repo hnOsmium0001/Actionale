@@ -49,9 +49,9 @@ enum class KeymapType(val tag: String) {
  * @see [KeymapType]
  */
 class Keymap(
-    val name: String,
-    val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
-    val combination: Array<KeyChord>
+        val name: String,
+        val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
+        val combination: Array<KeyChord>
 ) {
     /**
      * Listeners to be called whenever this keymap changes state, i.e. from `PRESSED` to `RELEASED` or vice versa. Add
@@ -77,78 +77,87 @@ class Keymap(
         }
     }
 
-    private var pressedIndex = -1
-    private fun onChordChanged(chord: KeyChord, state: InputAction) {
-        if (state == GLFW_RELEASE && combination.last() == chord) {
-            // If the last key chord is released, this keymap must be released
-            // because the last key chord must be the last to trigger and last to release
-            this.state = GLFW_RELEASE
-            return
-        }
+    private var expectedIndex = 0
+    private var expectedAction = GLFW_PRESS
+    private fun onChordChanged(chord: KeyChord, action: InputAction) {
+        if (combination[expectedIndex] == chord && expectedAction == action) {
+            // For the last key chord, press/release this keymap when it gets pressed/released
+            if (expectedIndex == combination.size - 1) {
+                state = action
+            }
 
-        if (combination[pressedIndex + 1] == chord) {
-            // The next required key chord is pressed, advance index to look for the next one
-            pressedIndex++
-            if (pressedIndex >= combination.size) {
-                // At end of the array, matched all of the key chords successfully
-                this.state = state
+            expectedAction = when (expectedAction) {
+                GLFW_PRESS -> GLFW_RELEASE
+                GLFW_RELEASE -> {
+                    // The current key chord has completed both actions, move on to the next one
+                    expectedIndex++
+                    GLFW_PRESS
+                }
+                else -> throw RuntimeException()
+            }
+
+            // Went through all of the key chords
+            if (expectedIndex >= combination.size) {
+                expectedIndex = 0
             }
         } else {
             // Pressing streak failed, reset to beginning
-            pressedIndex = -1
+            expectedIndex = 0
+            // Retry from the start because the input might be the first key chord
+            this.onChordChanged(chord, action)
         }
     }
 
     override fun toString(): String {
         return combination.asSequence()
-            .map { it.toString() }
-            .joinToString { it }
+                .map { it.toString() }
+                .joinToString { it }
     }
 
     fun translate(): String {
         return combination.asSequence()
-            .map { it.translate() }
-            .joinToString { it }
+                .map { it.translate() }
+                .joinToString { it }
     }
 }
 
 fun Keymap.serializeCombinations() =
-    // KeyChord[] -> JsonArray
-    combination.pack { chord ->
-        // KeyChord -> JsonObject
-        JsonObject().also { chordData ->
-            // Key[] -> JsonArray
-            chordData.add("keys", chord.keys.pack { key ->
-                // Key -> JsonObject
-                JsonObject().also { keyData ->
-                    keyData.addProperty("type", key.category.ordinal)
-                    keyData.addProperty("key_code", key.keyCode)
-                }
-                // ...
-            })
+        // KeyChord[] -> JsonArray
+        combination.pack { chord ->
+            // KeyChord -> JsonObject
+            JsonObject().also { chordData ->
+                // Key[] -> JsonArray
+                chordData.add("keys", chord.keys.pack { key ->
+                    // Key -> JsonObject
+                    JsonObject().also { keyData ->
+                        keyData.addProperty("type", key.category.ordinal)
+                        keyData.addProperty("key_code", key.keyCode)
+                    }
+                    // ...
+                })
+            }
+            // ...
         }
-        // ...
-    }
 
 fun deserializeKeymapCombinations(data: JsonArray) =
-    // JsonArray -> KeyChord[]
-    Array(data.size()) { chordIdx ->
-        // JsonObject -> KeyChord
-        data.get(chordIdx).asJsonObject.let { chordData ->
-            val keysData = chordData.get("keys").asJsonArray
-            // JsonArray -> Key[]
-            KeyChordManager.obtain(Array(keysData.size()) { keyIdx ->
-                // JsonObject -> Key
-                keysData.get(keyIdx).asJsonObject.let { keyData ->
-                    val typeID = keyData.get("type").asInt
-                    val keyCode = keyData.get("key_code").asInt
-                    InputUtil.Type.values()[typeID].createFromCode(keyCode)
-                }
-                // ...
-            })
+        // JsonArray -> KeyChord[]
+        Array(data.size()) { chordIdx ->
+            // JsonObject -> KeyChord
+            data.get(chordIdx).asJsonObject.let { chordData ->
+                val keysData = chordData.get("keys").asJsonArray
+                // JsonArray -> Key[]
+                KeyChordManager.obtain(Array(keysData.size()) { keyIdx ->
+                    // JsonObject -> Key
+                    keysData.get(keyIdx).asJsonObject.let { keyData ->
+                        val typeID = keyData.get("type").asInt
+                        val keyCode = keyData.get("key_code").asInt
+                        InputUtil.Type.values()[typeID].createFromCode(keyCode)
+                    }
+                    // ...
+                })
+            }
+            // ...
         }
-        // ...
-    }
 
 object KeymapManager {
     /**
@@ -234,9 +243,9 @@ object KeymapManager {
             // The `name` map key and the `type` is pretended to be a part of a Keymap
             val keymapData = keymapData.asJsonObject
             val keymap = Keymap(
-                name = keymapData.get("name").asString,
-                type = KeymapType.fromTag(keymapData.get("type").asString)!!,
-                combination = deserializeKeymapCombinations(keymapData.get("combinations").asJsonArray)
+                    name = keymapData.get("name").asString,
+                    type = KeymapType.fromTag(keymapData.get("type").asString)!!,
+                    combination = deserializeKeymapCombinations(keymapData.get("combinations").asJsonArray)
             )
             // Drop unmapped overrides
             if (keymaps.contains(keymap.name)) {
