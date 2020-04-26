@@ -42,14 +42,14 @@ class KeyChord internal constructor(val keys: Array<Key>) {
 
     override fun toString(): String {
         return keys.asSequence()
-                .map { it.toIndicatorCode() }
-                .joinToString("-", "<", ">") { it }
+            .map { it.indicator }
+            .joinToString("-", "<", ">") { it }
     }
 
     fun translate(): String {
         return keys.asSequence()
-                .map { it.toIndicatorTranslation() }
-                .joinToString("+") { it }
+            .map { it.translation }
+            .joinToString("+") { it }
     }
 }
 

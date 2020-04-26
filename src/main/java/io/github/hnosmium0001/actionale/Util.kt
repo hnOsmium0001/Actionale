@@ -5,6 +5,22 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import net.minecraft.util.Identifier
 
+fun <A, B> Pair<A, B>.firstOtherwise(otherwise: () -> Pair<A, B>): Pair<A, B> {
+    return if (first != null) {
+        this
+    } else {
+        otherwise.invoke()
+    }
+}
+
+fun <A, B> Pair<A, B>.secondOtherwise(otherwise: () -> Pair<A, B>): Pair<A, B> {
+    return if (second != null) {
+        this
+    } else {
+        otherwise.invoke()
+    }
+}
+
 fun Identifier.toDotSeparated() = this.toString().replace(':', '.')
 
 fun JsonObject.addProperty(key: String, value: Identifier) {

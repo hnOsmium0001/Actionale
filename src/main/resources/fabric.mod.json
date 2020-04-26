@@ -16,7 +16,7 @@
   "icon": "assets/actionale/icon.png",
   "environment": "client",
   "entrypoints": {
-    "main": [
+    "client": [
       {
         "adapter": "kotlin",
         "value": "io.github.hnosmium0001.actionale.Actionale"

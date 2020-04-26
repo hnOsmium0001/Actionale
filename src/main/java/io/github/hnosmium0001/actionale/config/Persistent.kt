@@ -8,6 +8,7 @@ import io.github.hnosmium0001.actionale.action.ActionManager
 import io.github.hnosmium0001.actionale.input.KeymapManager
 import java.io.FileReader
 import java.io.FileWriter
+import java.nio.file.Files
 import java.nio.file.Paths
 
 fun serializeModData(): JsonObject {
@@ -26,22 +27,27 @@ fun deserializeModData(data: JsonObject) {
 
 object GameOptions {
     val path get() = Paths.get("./options")
-    val playerOptions = GameOptions.path.resolve("${Actionale.MODID}/player_options.sjon")
+    val playerOptions = path.resolve("${Actionale.MODID}/player_options.json")
 }
 
-val gson = GsonBuilder()
-        .setPrettyPrinting()
-        .create()
-val jsonParser = JsonParser()
+private val gson = GsonBuilder()
+    .setPrettyPrinting()
+    .create()
+private val jsonParser = JsonParser()
 
 fun writeModData() {
-    FileWriter(GameOptions.playerOptions.toFile()).use { writer ->
+    val options = GameOptions.playerOptions.toFile()
+    options.parentFile.mkdirs()
+    FileWriter(options).use { writer ->
         val modData = serializeModData()
         gson.toJson(modData, writer)
     }
 }
 
 fun readModData() {
+    if (!Files.exists(GameOptions.playerOptions)) {
+        return
+    }
     FileReader(GameOptions.playerOptions.toFile()).use { reader ->
         val options = jsonParser.parse(reader).asJsonObject
         deserializeModData(options)

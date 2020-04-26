@@ -49,9 +49,9 @@ enum class KeymapType(val tag: String) {
  * @see [KeymapType]
  */
 class Keymap(
-        val name: String,
-        val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
-        val combination: Array<KeyChord>
+    val name: String,
+    val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
+    val combination: Array<KeyChord>
 ) {
     /**
      * Listeners to be called whenever this keymap changes state, i.e. from `PRESSED` to `RELEASED` or vice versa. Add
@@ -110,54 +110,70 @@ class Keymap(
 
     override fun toString(): String {
         return combination.asSequence()
-                .map { it.toString() }
-                .joinToString { it }
+            .map { it.toString() }
+            .joinToString { it }
     }
 
     fun translate(): String {
         return combination.asSequence()
-                .map { it.translate() }
-                .joinToString { it }
+            .map { it.translate() }
+            .joinToString { it }
     }
 }
 
+// TODO config
+val serializeNameOrID = true
+
 fun Keymap.serializeCombinations() =
-        // KeyChord[] -> JsonArray
-        combination.pack { chord ->
-            // KeyChord -> JsonObject
-            JsonObject().also { chordData ->
-                // Key[] -> JsonArray
-                chordData.add("keys", chord.keys.pack { key ->
-                    // Key -> JsonObject
-                    JsonObject().also { keyData ->
+    // KeyChord[] -> JsonArray
+    combination.pack { chord ->
+        // KeyChord -> JsonObject
+        JsonObject().also { chordData ->
+            // Key[] -> JsonArray
+            chordData.add("keys", chord.keys.pack { key ->
+                // Key -> JsonObject
+                JsonObject().also { keyData ->
+                    if (serializeNameOrID) {
+                        keyData.addProperty("type", key.categoryName)
+                        keyData.addProperty("keycode", key.indicator)
+                    } else {
                         keyData.addProperty("type", key.category.ordinal)
-                        keyData.addProperty("key_code", key.keyCode)
+                        keyData.addProperty("keycode", key.keyCode)
                     }
-                    // ...
-                })
-            }
-            // ...
+                }
+                // ...
+            })
         }
+        // ...
+    }
 
 fun deserializeKeymapCombinations(data: JsonArray) =
-        // JsonArray -> KeyChord[]
-        Array(data.size()) { chordIdx ->
-            // JsonObject -> KeyChord
-            data.get(chordIdx).asJsonObject.let { chordData ->
-                val keysData = chordData.get("keys").asJsonArray
-                // JsonArray -> Key[]
-                KeyChordManager.obtain(Array(keysData.size()) { keyIdx ->
-                    // JsonObject -> Key
-                    keysData.get(keyIdx).asJsonObject.let { keyData ->
-                        val typeID = keyData.get("type").asInt
-                        val keyCode = keyData.get("key_code").asInt
-                        InputUtil.Type.values()[typeID].createFromCode(keyCode)
+    // JsonArray -> KeyChord[]
+    Array(data.size()) { chordIdx ->
+        // JsonObject -> KeyChord
+        data.get(chordIdx).asJsonObject.let { chordData ->
+            val keysData = chordData.get("keys").asJsonArray
+            // JsonArray -> Key[]
+            KeyChordManager.obtain(Array(keysData.size()) { keyIdx ->
+                // JsonObject -> Key
+                keysData.get(keyIdx).asJsonObject.let { keyData ->
+                    val typeJson = keyData.get("type").asJsonPrimitive
+                    val keyCodeJson = keyData.get("keycode").asJsonPrimitive
+
+                    when {
+                        typeJson.isNumber && keyCodeJson.isNumber ->
+                            InputUtil.Type.values()[typeJson.asInt].createFromCode(keyCodeJson.asInt)
+                        typeJson.isString && keyCodeJson.isString ->
+                            keyFrom(typeJson.asString, keyCodeJson.asString)
+                        else ->
+                            throw RuntimeException()
                     }
-                    // ...
-                })
-            }
-            // ...
+                }
+                // ...
+            })
         }
+        // ...
+    }
 
 object KeymapManager {
     /**
@@ -243,9 +259,9 @@ object KeymapManager {
             // The `name` map key and the `type` is pretended to be a part of a Keymap
             val keymapData = keymapData.asJsonObject
             val keymap = Keymap(
-                    name = keymapData.get("name").asString,
-                    type = KeymapType.fromTag(keymapData.get("type").asString)!!,
-                    combination = deserializeKeymapCombinations(keymapData.get("combinations").asJsonArray)
+                name = keymapData.get("name").asString,
+                type = KeymapType.fromTag(keymapData.get("type").asString)!!,
+                combination = deserializeKeymapCombinations(keymapData.get("combinations").asJsonArray)
             )
             // Drop unmapped overrides
             if (keymaps.contains(keymap.name)) {
