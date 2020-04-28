@@ -1,9 +1,9 @@
 package io.github.hnosmium0001.actionale.testmod
 
-import io.github.hnosmium0001.actionale.input.KeyChordManager
-import io.github.hnosmium0001.actionale.input.KeyInputCallback
-import io.github.hnosmium0001.actionale.input.Keymap
-import io.github.hnosmium0001.actionale.input.MouseInputCallback
+import io.github.hnosmium0001.actionale.core.input.KeyChordManager
+import io.github.hnosmium0001.actionale.event.KeyInputCallback
+import io.github.hnosmium0001.actionale.core.input.Keymap
+import io.github.hnosmium0001.actionale.event.MouseInputCallback
 import net.fabricmc.api.ModInitializer
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.util.InputUtil

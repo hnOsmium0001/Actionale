@@ -1,4 +1,4 @@
-package io.github.hnosmium0001.actionale.input;
+package io.github.hnosmium0001.actionale.event;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;

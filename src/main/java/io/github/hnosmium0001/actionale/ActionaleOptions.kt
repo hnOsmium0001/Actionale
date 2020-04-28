@@ -1,11 +1,10 @@
-package io.github.hnosmium0001.actionale.config
+package io.github.hnosmium0001.actionale
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
-import io.github.hnosmium0001.actionale.Actionale
-import io.github.hnosmium0001.actionale.action.ActionManager
-import io.github.hnosmium0001.actionale.input.KeymapManager
+import io.github.hnosmium0001.actionale.core.action.ActionManager
+import io.github.hnosmium0001.actionale.core.input.KeymapManager
 import java.io.FileReader
 import java.io.FileWriter
 import java.nio.file.Files
@@ -25,10 +24,8 @@ fun deserializeModData(data: JsonObject) {
     }
 }
 
-object ModOptions {
-    val path get() = Paths.get("./options")
-    val player = path.resolve("${Actionale.MODID}/player_options.json")
-}
+val optionsPath get() = Paths.get("./options")
+val playerOptionsPath = optionsPath.resolve("${Actionale.MODID}/player_options.json")
 
 private val gson = GsonBuilder()
     .setPrettyPrinting()
@@ -36,7 +33,7 @@ private val gson = GsonBuilder()
 private val jsonParser = JsonParser()
 
 fun writeModData() {
-    val options = ModOptions.player.toFile()
+    val options = playerOptionsPath.toFile()
     options.parentFile.mkdirs()
     FileWriter(options).use { writer ->
         val modData = serializeModData()
@@ -45,10 +42,10 @@ fun writeModData() {
 }
 
 fun readModData() {
-    if (!Files.exists(ModOptions.player)) {
+    if (!Files.exists(playerOptionsPath)) {
         return
     }
-    FileReader(ModOptions.player.toFile()).use { reader ->
+    FileReader(playerOptionsPath.toFile()).use { reader ->
         val options = jsonParser.parse(reader).asJsonObject
         deserializeModData(options)
     }

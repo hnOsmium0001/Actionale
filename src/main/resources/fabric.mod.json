@@ -21,6 +21,9 @@
         "adapter": "kotlin",
         "value": "io.github.hnosmium0001.actionale.Actionale"
       }
+    ],
+    "modmenu": [
+      "io.github.hnosmium0001.actionale.integration.ActionaleModMenuIntegration"
     ]
   },
   "mixins": [
@@ -33,5 +36,8 @@
     "minecraft": "1.15.x"
   },
   "suggests": {
+  },
+  "custom": {
+    "modmenu:clientsideOnly": true
   }
 }

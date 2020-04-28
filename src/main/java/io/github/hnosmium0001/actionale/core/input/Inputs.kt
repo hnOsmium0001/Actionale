@@ -1,6 +1,6 @@
 @file:Suppress("NAME_SHADOWING")
 
-package io.github.hnosmium0001.actionale.input
+package io.github.hnosmium0001.actionale.core.input
 
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap

@@ -1,6 +1,6 @@
 package io.github.hnosmium0001.actionale.mixin;
 
-import io.github.hnosmium0001.actionale.input.KeyInputCallback;
+import io.github.hnosmium0001.actionale.event.KeyInputCallback;
 import net.minecraft.client.Keyboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

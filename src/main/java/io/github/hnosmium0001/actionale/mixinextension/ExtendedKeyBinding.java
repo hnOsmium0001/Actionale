@@ -1,4 +1,4 @@
-package io.github.hnosmium0001.actionale.mixin;
+package io.github.hnosmium0001.actionale.mixinextension;
 
 public interface ExtendedKeyBinding {
 

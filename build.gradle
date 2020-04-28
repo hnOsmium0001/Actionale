@@ -43,9 +43,9 @@ dependencies {
     // Mod dependencies
     modImplementation "net.fabricmc.fabric-api:fabric-api:$fabric_version"
     modImplementation "net.fabricmc:fabric-language-kotlin:$fabric_kotlin_version"
-//    modApi "me.shedaniel.cloth:config-2:$cloth_config_version"
-//    modImplementation "me.sargunvohra.mcmods:autoconfig1u:$auto_config_version"
     modImplementation "io.github.prospector:modmenu:$modmenu_version"
+    modImplementation "me.shedaniel.cloth:config-2:$cloth_config_version"
+    modImplementation "me.sargunvohra.mcmods:autoconfig1u:$auto_config_version"
 
     // Test-only dependencies
     testImplementation "org.junit.jupiter:junit-jupiter:$junit_version"
@@ -53,7 +53,7 @@ dependencies {
     // Testmod-only dependencies
     testmodCompile sourceSets.main.output // Inherit from `main`
 
-//    modRuntime "" TODO add REI
+    modRuntime "me.shedaniel:RoughlyEnoughItems:$rei_version"
 }
 
 processResources {

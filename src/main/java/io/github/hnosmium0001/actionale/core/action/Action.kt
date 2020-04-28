@@ -1,14 +1,15 @@
-package io.github.hnosmium0001.actionale.action
+package io.github.hnosmium0001.actionale.core.action
 
 import com.google.common.base.Preconditions
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import io.github.hnosmium0001.actionale.*
-import io.github.hnosmium0001.actionale.input.InputAction
-import io.github.hnosmium0001.actionale.input.Keymap
-import io.github.hnosmium0001.actionale.input.KeymapManager
+import io.github.hnosmium0001.actionale.core.input.InputAction
+import io.github.hnosmium0001.actionale.core.input.Keymap
+import io.github.hnosmium0001.actionale.core.input.KeymapManager
 import net.minecraft.util.Identifier
+import org.lwjgl.glfw.GLFW.GLFW_PRESS
 
 // TODO add support for KeyBinding -> Action
 
@@ -40,7 +41,7 @@ sealed class Action(
     // Record the names instead of direct references to allow player-overrides
     val triggers: MutableSet<String> = HashSet()
 ) {
-    var callback: (Keymap, InputAction) -> Unit = { keymap, action -> }
+    var callback: (Keymap, InputAction) -> Unit = { _, _ -> }
         set(value) {
             for (name in triggers) {
                 val keymap = KeymapManager[name] ?: continue
@@ -70,7 +71,8 @@ class RadialMenuAction(
         callback = this::openRadialMenu
     }
 
-    fun openRadialMenu(keymap: Keymap, action: InputAction) {
+    fun openRadialMenu(wkeymap: Keymap, action: InputAction) {
+        if (action != GLFW_PRESS) return
         TODO("unimplemented")
     }
 }

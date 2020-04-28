@@ -1,6 +1,6 @@
 package io.github.hnosmium0001.actionale.mixin;
 
-import io.github.hnosmium0001.actionale.input.MouseInputCallback;
+import io.github.hnosmium0001.actionale.event.MouseInputCallback;
 import net.minecraft.client.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

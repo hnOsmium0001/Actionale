@@ -1,13 +1,15 @@
 @file:Suppress("NAME_SHADOWING")
 
-package io.github.hnosmium0001.actionale.input
+package io.github.hnosmium0001.actionale.core.input
 
 import com.google.common.base.Preconditions
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import io.github.hnosmium0001.actionale.mixin.ExtendedKeyBinding
+import io.github.hnosmium0001.actionale.modConfig
+import io.github.hnosmium0001.actionale.mixinextension.ExtendedKeyBinding
 import io.github.hnosmium0001.actionale.pack
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.options.GameOptions
 import net.minecraft.client.options.KeyBinding
 import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
@@ -123,9 +125,6 @@ class Keymap(
     }
 }
 
-// TODO config
-val serializeNameOrID = true
-
 fun Keymap.serializeCombinations() =
     // KeyChord[] -> JsonArray
     combination.pack { chord ->
@@ -135,7 +134,7 @@ fun Keymap.serializeCombinations() =
             chordData.add("keys", chord.keys.pack { key ->
                 // Key -> JsonObject
                 JsonObject().also { keyData ->
-                    if (serializeNameOrID) {
+                    if (modConfig.exportNamedKeys) {
                         keyData.addProperty("type", key.categoryName)
                         keyData.addProperty("keycode", key.indicator)
                     } else {
@@ -202,9 +201,9 @@ object KeymapManager {
     // Modified by users through GUI or options file
     val keymapOverrides: MutableMap<String, Keymap> = HashMap()
 
-    fun generateMigrations() {
+    fun generateMigrations(keyBindings: Array<out KeyBinding>) {
         migratedKeymaps as MutableMap
-        for (keyBinding in MinecraftClient.getInstance().options.keysAll) {
+        for (keyBinding in keyBindings) {
             val migration = Keymap(
                 name = keyBinding.id,
                 type = KeymapType.MIGRATED,

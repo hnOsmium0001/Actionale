@@ -1,4 +1,4 @@
-package io.github.hnosmium0001.actionale.input
+package io.github.hnosmium0001.actionale.core.input
 
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
