@@ -25,9 +25,9 @@ fun deserializeModData(data: JsonObject) {
     }
 }
 
-object GameOptions {
+object ModOptions {
     val path get() = Paths.get("./options")
-    val playerOptions = path.resolve("${Actionale.MODID}/player_options.json")
+    val player = path.resolve("${Actionale.MODID}/player_options.json")
 }
 
 private val gson = GsonBuilder()
@@ -36,7 +36,7 @@ private val gson = GsonBuilder()
 private val jsonParser = JsonParser()
 
 fun writeModData() {
-    val options = GameOptions.playerOptions.toFile()
+    val options = ModOptions.player.toFile()
     options.parentFile.mkdirs()
     FileWriter(options).use { writer ->
         val modData = serializeModData()
@@ -45,10 +45,10 @@ fun writeModData() {
 }
 
 fun readModData() {
-    if (!Files.exists(GameOptions.playerOptions)) {
+    if (!Files.exists(ModOptions.player)) {
         return
     }
-    FileReader(GameOptions.playerOptions.toFile()).use { reader ->
+    FileReader(ModOptions.player.toFile()).use { reader ->
         val options = jsonParser.parse(reader).asJsonObject
         deserializeModData(options)
     }

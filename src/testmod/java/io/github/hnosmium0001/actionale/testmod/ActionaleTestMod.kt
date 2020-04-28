@@ -25,48 +25,49 @@ object ActionaleTestMod : ModInitializer {
             logger.info("Mouse button: $button, action: $action, mods: $mods")
         })
 
-        val ctrlJ = KeyChordManager.obtain(arrayOf(
-                InputUtil.getKeyCode(GLFW.GLFW_KEY_LEFT_CONTROL, -1),
-                InputUtil.getKeyCode(GLFW.GLFW_KEY_J, -1)
-        ))
+        val ctrlJ = KeyChordManager.obtain(
+            InputUtil.getKeyCode(GLFW.GLFW_KEY_LEFT_CONTROL, -1),
+            InputUtil.getKeyCode(GLFW.GLFW_KEY_J, -1)
+        )
         ctrlJ.listeners.add { _, action ->
             println("Keychord Ctrl+J triggered as $action")
         }
 
 
         val ctrlW_C = Keymap(
-                name = "<C-w>c",
-                combination = arrayOf(
-                        KeyChordManager.obtain(arrayOf(
-                                InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_LEFT_CONTROL),
-                                InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_W)
-                        )),
-                        KeyChordManager.obtain(arrayOf(
-                                InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_C)
-                        ))
+            name = "<C-w>c",
+            combination = arrayOf(
+                KeyChordManager.obtain(
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_LEFT_CONTROL),
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_W)
+                ),
+                KeyChordManager.obtain(
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_C)
                 )
+            )
         )
-        val g = KeyChordManager.obtain(arrayOf(
-                InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_G)
-        ))
         val gt = Keymap(
-                name = "gt",
-                combination = arrayOf(
-                        g,
-                        KeyChordManager.obtain(arrayOf(
-                                InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_T)
-                        ))
+            name = "gt",
+            combination = arrayOf(
+                KeyChordManager.obtain(
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_G)
+                ),
+                KeyChordManager.obtain(
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_T)
                 )
+            )
         )
         val gT = Keymap(
-                name = "gT",
-                combination = arrayOf(
-                        g,
-                        KeyChordManager.obtain(arrayOf(
-                                InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_LEFT_SHIFT),
-                                InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_T)
-                        ))
+            name = "gT",
+            combination = arrayOf(
+                KeyChordManager.obtain(
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_G)
+                ),
+                KeyChordManager.obtain(
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_LEFT_SHIFT),
+                    InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_T)
                 )
+            )
         )
 
         ctrlW_C.listeners.add { _, action ->

@@ -5,7 +5,9 @@ package io.github.hnosmium0001.actionale.input
 import com.google.common.base.Preconditions
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import io.github.hnosmium0001.actionale.mixin.ExtendedKeyBinding
 import io.github.hnosmium0001.actionale.pack
+import net.minecraft.client.MinecraftClient
 import net.minecraft.client.options.KeyBinding
 import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
@@ -51,7 +53,7 @@ enum class KeymapType(val tag: String) {
 class Keymap(
     val name: String,
     val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
-    val combination: Array<KeyChord>
+    val combination: Array<out KeyChord>
 ) {
     /**
      * Listeners to be called whenever this keymap changes state, i.e. from `PRESSED` to `RELEASED` or vice versa. Add
@@ -154,7 +156,7 @@ fun deserializeKeymapCombinations(data: JsonArray) =
         data.get(chordIdx).asJsonObject.let { chordData ->
             val keysData = chordData.get("keys").asJsonArray
             // JsonArray -> Key[]
-            KeyChordManager.obtain(Array(keysData.size()) { keyIdx ->
+            KeyChordManager.obtain(*Array(keysData.size()) { keyIdx ->
                 // JsonObject -> Key
                 keysData.get(keyIdx).asJsonObject.let { keyData ->
                     val typeJson = keyData.get("type").asJsonPrimitive
@@ -178,7 +180,7 @@ fun deserializeKeymapCombinations(data: JsonArray) =
 object KeymapManager {
     /**
      * Keymaps automatically generated from [KeyBinding]s. Cannot be created manually but its generation can be
-     * configured by TODO.
+     * configured through keymap overrides.
      */
     val migratedKeymaps: Map<String, Pair<KeyBinding, Keymap>> = HashMap()
 
@@ -191,17 +193,33 @@ object KeymapManager {
 
     /**
      * Player-defined key maps that are persisted onto the disk. The overrides has higher priority than the developer-
-     * defined kaymaps when querying and deleting.
+     * defined keymaps when querying and deleting.
      *
      * Note: player-defined overrides are meant to be used in combination with radial action menus. Their callbacks are
      * reattached by radial menus after deserialization. If developers make use of overrides, they need to reattach
      * callbacks to the overrides after deserialization too since lambdas can't be serialized (easily).
      */
-    // Modified by users through GUI
+    // Modified by users through GUI or options file
     val keymapOverrides: MutableMap<String, Keymap> = HashMap()
 
     fun generateMigrations() {
-        TODO("unimplemented")
+        migratedKeymaps as MutableMap
+        for (keyBinding in MinecraftClient.getInstance().options.keysAll) {
+            val migration = Keymap(
+                name = keyBinding.id,
+                type = KeymapType.MIGRATED,
+                combination = arrayOf(KeyChordManager.obtain(keyBinding.defaultKeyCode))
+            )
+            migration.listeners.add { _, action ->
+                keyBinding as ExtendedKeyBinding
+                when (action) {
+                    GLFW_PRESS -> keyBinding.press()
+                    GLFW_RELEASE -> keyBinding.release()
+                    else -> throw RuntimeException()
+                }
+            }
+            migratedKeymaps[keyBinding.name] = Pair(keyBinding, migration)
+        }
     }
 
     fun registerKeymap(name: String, keymap: Keymap) {
