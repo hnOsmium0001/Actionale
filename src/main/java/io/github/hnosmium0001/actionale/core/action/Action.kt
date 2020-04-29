@@ -43,12 +43,12 @@ sealed class Action(
 ) {
     var callback: (Keymap, InputAction) -> Unit = { _, _ -> }
         set(value) {
+            field = value
             for (name in triggers) {
                 val keymap = KeymapManager[name] ?: continue
-                keymap.listeners.remove(field)
-                keymap.listeners.add(value)
+                keymap.listeners.remove(this)
+                keymap.listeners[this] = value
             }
-            field = value
         }
 
     override fun toString(): String {

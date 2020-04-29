@@ -5,11 +5,11 @@ package io.github.hnosmium0001.actionale.core.input
 import com.google.common.base.Preconditions
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import io.github.hnosmium0001.actionale.modConfig
+import io.github.hnosmium0001.actionale.IdentityHashListenerMap
+import io.github.hnosmium0001.actionale.ListenerMap
 import io.github.hnosmium0001.actionale.mixinextension.ExtendedKeyBinding
+import io.github.hnosmium0001.actionale.modConfig
 import io.github.hnosmium0001.actionale.pack
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.options.GameOptions
 import net.minecraft.client.options.KeyBinding
 import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
@@ -55,18 +55,30 @@ enum class KeymapType(val tag: String) {
 class Keymap(
     val name: String,
     val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
-    val combination: Array<out KeyChord>
+    combination: Array<out KeyChord>
 ) {
+    var combination: Array<out KeyChord> = combination
+        set(value) {
+            // Remove the old listeners, add new listeners
+            for (chord in field) {
+                chord.listeners.remove(this)
+            }
+            for (chord in value) {
+                chord.listeners[this] = this::onChordChanged
+            }
+            field = value
+        }
+
     /**
      * Listeners to be called whenever this keymap changes state, i.e. from `PRESSED` to `RELEASED` or vice versa. Add
      * or remove listeners according to the need.
      */
-    val listeners: MutableSet<(Keymap, InputAction) -> Unit> = HashSet()
+    val listeners: ListenerMap<(Keymap, InputAction) -> Unit> = IdentityHashListenerMap()
     var state: InputAction = GLFW_RELEASE
         private set(value) {
             if (field != value) {
                 field = value
-                for (listener in listeners) {
+                for (listener in listeners.values) {
                     listener.invoke(this, value)
                 }
             }
@@ -76,8 +88,9 @@ class Keymap(
 
     init {
         Preconditions.checkArgument(combination.isNotEmpty())
+
         for (chord in combination) {
-            chord.listeners += this::onChordChanged
+            chord.listeners[this] = this::onChordChanged
         }
     }
 
@@ -176,6 +189,27 @@ fun deserializeKeymapCombinations(data: JsonArray) =
         // ...
     }
 
+fun Keymap.copyWith(
+    newName: String? = null,
+    newType: KeymapType? = null,
+    newCombination: Array<out KeyChord>? = null,
+    transferListeners: Boolean = false
+): Keymap {
+    val updated = Keymap(
+        name = newName ?: this.name,
+        type = newType ?: this.type,
+        combination = newCombination ?: this.combination
+    )
+    if (transferListeners) {
+        for (listener in this.listeners.values) {
+            updated.listeners += listener
+        }
+    }
+    return updated
+}
+
+fun Keymap.copy() = this.copyWith(transferListeners = true)
+
 object KeymapManager {
     /**
      * Keymaps automatically generated from [KeyBinding]s. Cannot be created manually but its generation can be
@@ -201,6 +235,9 @@ object KeymapManager {
     // Modified by users through GUI or options file
     val keymapOverrides: MutableMap<String, Keymap> = HashMap()
 
+    /**
+     * Generate and add migrated keymaps
+     */
     fun generateMigrations(keyBindings: Array<out KeyBinding>) {
         migratedKeymaps as MutableMap
         for (keyBinding in keyBindings) {
@@ -209,7 +246,7 @@ object KeymapManager {
                 type = KeymapType.MIGRATED,
                 combination = arrayOf(KeyChordManager.obtain(keyBinding.defaultKeyCode))
             )
-            migration.listeners.add { _, action ->
+            migration.listeners += { _, action ->
                 keyBinding as ExtendedKeyBinding
                 when (action) {
                     GLFW_PRESS -> keyBinding.press()
@@ -217,20 +254,29 @@ object KeymapManager {
                     else -> throw RuntimeException()
                 }
             }
-            migratedKeymaps[keyBinding.name] = Pair(keyBinding, migration)
+            migratedKeymaps[keyBinding.id] = Pair(keyBinding, migration)
         }
+    }
+
+    /**
+     * Update key combination of the named migrated keymap. This should **NOT** be called by developers for
+     * customization usages. Instead this is meant for syncing key combination when other mods tries to modify
+     * [KeyBinding]'s key code
+     *
+     * @see io.github.hnosmium0001.actionale.mixin.MixinKeyBinding.setKeyCodeHook
+     */
+    fun updateMigration(name: String, newKey: Key) {
+        migratedKeymaps as MutableMap
+        val (_, original) = migratedKeymaps[name] ?: return
+        original.combination = arrayOf(KeyChordManager.obtain(newKey))
     }
 
     fun registerKeymap(name: String, keymap: Keymap) {
         Preconditions.checkArgument(keymap.type == KeymapType.DEVELOPER_DEFINED)
+        Preconditions.checkArgument(!keymaps.containsKey(name))
 
         keymaps as MutableMap
         keymaps[name] = keymap
-        // If the developer-defined keymap overrides a migrated keymap, we replaced the auto-generated one
-        migratedKeymaps[name]?.let { old ->
-            migratedKeymaps as MutableMap
-            migratedKeymaps[name] = Pair(old.first, keymap)
-        }
     }
 
     operator fun get(name: String): Keymap? {

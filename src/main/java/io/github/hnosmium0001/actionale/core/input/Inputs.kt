@@ -138,12 +138,19 @@ internal object TriggerTree {
     private val root = RootTriggerNode()
 
     private var currentMatch: TriggerNode = root
-    private val pressedChords = ArrayList<KeyChord>()
+    private val pressedChords: MutableList<KeyChord> = ArrayList()
 
-    fun onKeyPress(key: InputUtil.KeyCode) {
+    fun onKeyPress(key: Key) {
         currentMatch = currentMatch.children.getOrDefault(key, root)
         currentMatch.chord?.state = GLFW_PRESS
         currentMatch.chord?.run { pressedChords.add(this) }
+
+        // Compatibility for vanilla sprint and sneak keys
+        // TODO support arbitrary modifier keymaps
+        root.children[key]?.chord?.run {
+            state = GLFW_PRESS
+            pressedChords.add(this)
+        }
     }
 
     fun clearPresses() {

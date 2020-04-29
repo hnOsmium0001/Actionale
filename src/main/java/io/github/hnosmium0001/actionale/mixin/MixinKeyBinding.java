@@ -1,8 +1,8 @@
 package io.github.hnosmium0001.actionale.mixin;
 
-import io.github.hnosmium0001.actionale.core.input.*;
+import io.github.hnosmium0001.actionale.core.input.InputManager;
+import io.github.hnosmium0001.actionale.core.input.KeymapManager;
 import io.github.hnosmium0001.actionale.mixinextension.ExtendedKeyBinding;
-import kotlin.Pair;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.util.InputUtil.KeyCode;
 import org.spongepowered.asm.mixin.Final;
@@ -21,10 +21,10 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
 
     /**
      * Remove notification to vanilla key binds, this will be done through migrated keymaps. See {@link
-     * KeymapManager#generateMigrations()}.
+     * KeymapManager#generateMigrations(KeyBinding[])}.
      */
     @Overwrite
-    public static void onKeyPressed(KeyCode keyCode) {
+    public static void onKeyPressed(KeyCode key) {
     }
 
     /**
@@ -39,8 +39,10 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
     @Shadow
     @Final
     private String id;
-    @Shadow private int timesPressed;
-    @Shadow private boolean pressed;
+    @Shadow
+    private int timesPressed;
+    @Shadow
+    private boolean pressed;
 
     /**
      * In case other developers tries to set the keycode of vanilla key binding manually, redirect the action to {@link
@@ -48,15 +50,7 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
      */
     @Inject(method = "setKeyCode", at = @At("RETURN"))
     public void setKeyCodeHook(KeyCode newKey, CallbackInfo info) {
-        Pair<KeyBinding, Keymap> queryResult = KeymapManager.INSTANCE.getMigratedKeymaps().get(id);
-        if (queryResult == null) return;
-
-        Keymap original = queryResult.getSecond();
-        Keymap updated = new Keymap(
-                original.getName(), original.getType(),
-                new KeyChord[]{KeyChordManager.INSTANCE.obtain(newKey)}
-        );
-        KeymapManager.INSTANCE.getMigratedKeymaps().put(id, new Pair<>(queryResult.getFirst(), updated));
+        KeymapManager.INSTANCE.updateMigration(id, newKey);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package io.github.hnosmium0001.actionale.core.input
 
+import io.github.hnosmium0001.actionale.IdentityHashListenerMap
+import io.github.hnosmium0001.actionale.ListenerMap
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 
@@ -12,12 +14,12 @@ class KeyChord internal constructor(val keys: Array<out Key>) {
      * Listeners to be called whenever this key chord gets registered as pressed or unpressed. All listeners are called
      * with parameter `this` and the current key state.
      */
-    val listeners: MutableSet<(KeyChord, InputAction) -> Unit> = HashSet()
+    val listeners: ListenerMap<(KeyChord, InputAction) -> Unit> = IdentityHashListenerMap()
     var state: InputAction = GLFW_RELEASE
         set(value) {
             if (field != value) {
                 field = value
-                for (callback in listeners) {
+                for ((_, callback) in listeners) {
                     callback.invoke(this, value)
                 }
             }
@@ -53,6 +55,11 @@ class KeyChord internal constructor(val keys: Array<out Key>) {
     }
 }
 
+/**
+ * Array wrapper for content based [equals] and [hashCode]. Used as key in a [HashMap]
+ *
+ * @see KeyChordManager
+ */
 private class Keys(val array: Array<out Key>) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -76,12 +83,10 @@ object KeyChordManager {
     fun obtain(vararg keys: Key): KeyChord {
         keyChords as MutableMap
         val wrapped = Keys(keys)
-        if (keyChords.containsKey(wrapped)) {
-            return keyChords[wrapped] ?: error("")
+        return keyChords.getOrPut(wrapped) {
+            val chord = KeyChord(keys)
+            TriggerTree.addNodesFor(chord)
+            chord
         }
-        val chord = KeyChord(keys)
-        keyChords[wrapped] = chord
-        TriggerTree.addNodesFor(chord)
-        return chord
     }
 }
