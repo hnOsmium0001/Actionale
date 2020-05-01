@@ -66,7 +66,7 @@ inline fun <reified T> JsonArray.unpackArray(unpacker: (JsonElement) -> T) =
         unpacker.invoke(this[idx])
     }
 
-inline fun <T> JsonArray.unpackUse(unpacker: JsonObject.() -> T) {
+inline fun <T> JsonArray.unpackUse(unpacker: (JsonObject) -> T) {
     for (obj in this) {
         unpacker.invoke(obj as JsonObject)
     }
