@@ -18,12 +18,12 @@ const val HALF_PI = Math.PI / 2
 
 class RadialMenu(
     val components: Array<out Action>,
-    val componentsPerPage: Int = 12,
+    val componentsPerPage: Int,
     title: Text
 ) : Screen(title) {
     constructor(
         components: Array<out Action>,
-        componentsPerPage: Int = 12,
+        componentsPerPage: Int,
         trKey: String
     ) : this(components, componentsPerPage, title = TranslatableText(trKey))
 
@@ -55,8 +55,7 @@ class RadialMenu(
                 hoveredVert1 = lastVert
                 hoveredVert2 = vert
             }
-            // TODO color
-            val col = if (i.isEven()) 0xff001122.toInt() else 0xff334455.toInt()
+            val col = if (i.isEven()) 0xaa1f6eff.toInt() else 0xaa1fcfff.toInt()
             buffer.vertex(center).color(col).next()
             buffer.vertex(lastVert).color(col).next()
             buffer.vertex(vert).color(col).next()

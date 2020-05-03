@@ -8,6 +8,8 @@ import io.github.hnosmium0001.actionale.*
 import io.github.hnosmium0001.actionale.core.input.InputAction
 import io.github.hnosmium0001.actionale.core.input.Keymap
 import io.github.hnosmium0001.actionale.core.input.KeymapManager
+import io.github.hnosmium0001.actionale.core.ui.RadialMenu
+import net.minecraft.client.MinecraftClient
 import net.minecraft.util.Identifier
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 
@@ -68,12 +70,16 @@ class RadialMenuAction(
     val subActions: Array<Action>
 ) : Action(id, name, triggers) {
     init {
-        callback = this::openRadialMenu
+        callback = { _, action -> this.openRadialMenu(action) }
     }
 
-    fun openRadialMenu(wkeymap: Keymap, action: InputAction) {
+    fun openRadialMenu(action: InputAction) {
         if (action != GLFW_PRESS) return
-        TODO("unimplemented")
+        MinecraftClient.getInstance().openScreen(RadialMenu(
+            components = this.subActions,
+            componentsPerPage = modConfig.radialMenuMinSides,
+            trKey = "gui.actinoale.radialMenu.title"
+        ))
     }
 }
 

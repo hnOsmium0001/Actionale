@@ -120,12 +120,12 @@ fun keyFromTranslation(translationKey: String): Key {
 }
 
 object InputManager {
-    fun setKeyStatus(keyCode: InputUtil.KeyCode, action: InputAction) {
+    fun setKeyStatus(key: InputUtil.KeyCode, action: InputAction) {
         // Handle key chord triggering
         if (action != GLFW_PRESS) {
-            TriggerTree.clearPresses()
+            TriggerTree.onKeyRelease(key)
         } else {
-            TriggerTree.onKeyPress(keyCode)
+            TriggerTree.onKeyPress(key)
         }
     }
 }
@@ -135,32 +135,41 @@ object InputManager {
  * key chords.
  */
 internal object TriggerTree {
+
     private val root = RootTriggerNode()
 
-    private var currentMatch: TriggerNode = root
-    private val pressedChords: MutableList<KeyChord> = ArrayList()
+    private val matchingStates: MutableList<TriggerNode> = ArrayList()
 
+    // TODO fix any key release catorizes as release for all
     fun onKeyPress(key: Key) {
-        currentMatch = currentMatch.children.getOrDefault(key, root)
-        currentMatch.chord?.state = GLFW_PRESS
-        currentMatch.chord?.run { pressedChords.add(this) }
-
-        // Compatibility for vanilla sprint and sneak keys
-        // TODO support arbitrary modifier keymaps
-        root.children[key]?.chord?.run {
-            state = GLFW_PRESS
-            pressedChords.add(this)
+        // Start a new key matching state
+        root.children[key]?.run { matchingStates += this }
+        // Try to advance pointer on key press
+        for (state in matchingStates) {
+            state.children.getOrDefault(key, root)
+            state.chord?.state = GLFW_PRESS
         }
     }
 
-    fun clearPresses() {
-        // Clear all matching progress because a key chord needs all key presses to be continuous
-        currentMatch = root
-
-        for (chord in pressedChords) {
-            chord.state = GLFW_RELEASE
+    fun onKeyRelease(key: Key) {
+        // Try to un-advance current pointer(s)
+        matchingStates.removeAll { state ->
+            // The key that activated the current state pointer is released, cancel
+            if (state.parent?.children?.get(key) == state) {
+                releaseAllLeaf2Root(state)
+                true
+            } else {
+                false
+            }
         }
-        pressedChords.clear()
+    }
+
+    private fun releaseAllLeaf2Root(leaf: TriggerNode) {
+        var current: TriggerNode? = leaf
+        while (current != null) {
+            current.chord?.state = GLFW_RELEASE
+            current = current.parent
+        }
     }
 
     fun addNodesFor(chord: KeyChord) {
