@@ -5,6 +5,8 @@ package io.github.hnosmium0001.actionale.core.input
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
 import io.github.hnosmium0001.actionale.firstOtherwise
+import io.github.hnosmium0001.actionale.mapInPlace
+import io.github.hnosmium0001.actionale.modConfig
 import net.minecraft.client.resource.language.I18n
 import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW.*
@@ -15,9 +17,19 @@ typealias Scancode = Int
 typealias MouseCode = Int
 
 /**
- * Valid values: `GLFW_PRESS`, `GLFW_RELEASE`, `GLFW_REPEAT`.
+ * @see GLFW_PRESS
+ * @see GLFW_RELEASE
+ * @see GLFW_REPEAT
  */
 typealias InputAction = Int
+/**
+ * @see GLFW_MOD_CONTROL
+ * @see GLFW_MOD_SHIFT
+ * @see GLFW_MOD_ALT
+ * @see GLFW_MOD_CAPS_LOCK
+ * @see GLFW_MOD_SUPER
+ * @see GLFW_MOD_NUM_LOCK
+ */
 typealias ModFlags = Int
 
 // Even though `InputUtil.KeyCode` have categories, Actionale's abstraction layer doesn't. We want the indicators to be
@@ -61,9 +73,8 @@ private val keyIndicatorMap: BiMap<Int, String> = HashBiMap.create<Int, String>(
     put(GLFW_KEY_LEFT, "left")
     put(GLFW_KEY_RIGHT, "right")
 
-    // TODO configurable leader keu
     // Set <leader> key last so that it overrides whatever it equals to
-    put(GLFW_KEY_BACKSLASH, "leader")
+    put(modConfig.leaderKey, "leader")
 }
 private val mouseIndicatorMap: BiMap<Int, String> = HashBiMap.create<Int, String>().apply {
     put(GLFW_MOUSE_BUTTON_LEFT, "M_left")
@@ -120,12 +131,16 @@ fun keyFromTranslation(translationKey: String): Key {
 }
 
 object InputManager {
-    fun setKeyStatus(key: InputUtil.KeyCode, action: InputAction) {
+    fun setKeyStatus(key: Key, action: InputAction) {
         // Handle key chord triggering
-        if (action != GLFW_PRESS) {
-            TriggerTree.onKeyRelease(key)
-        } else {
-            TriggerTree.onKeyPress(key)
+        if (key.keyCode == GLFW_KEY_UNKNOWN) {
+            return
+        }
+        when (action) {
+            GLFW_PRESS -> TriggerTree.onKeyPress(key)
+            GLFW_RELEASE -> TriggerTree.onKeyRelease(key)
+            else -> {
+            }
         }
     }
 }
@@ -138,37 +153,37 @@ internal object TriggerTree {
 
     private val root = RootTriggerNode()
 
+    // We have multiple matching states because the need to support alternative inputs
+    // For example, the player might press W, and then press space. Both of the inputs are expected to be processed
+    // and the first input (key W) is expected to stay on after the jump as well.
     private val matchingStates: MutableList<TriggerNode> = ArrayList()
 
-    // TODO fix any key release catorizes as release for all
     fun onKeyPress(key: Key) {
-        // Start a new key matching state
-        root.children[key]?.run { matchingStates += this }
-        // Try to advance pointer on key press
-        for (state in matchingStates) {
-            state.children.getOrDefault(key, root)
-            state.chord?.state = GLFW_PRESS
+        // Advance pointer on key press
+        matchingStates
+            // If this matching state doesn't have any corresponding children key, we leave it as is
+            .mapInPlace { it.children.getOrDefault(key, it) }
+            // Note that if this matching state is already "finished", setting `state` to `GLFW_PRESS` wouldn't do
+            // anything because it's already pressed
+            .forEach { it.chord?.state = GLFW_PRESS }
+
+        // Try to start a new key matching state
+        root.children[key]?.run {
+            matchingStates += this
+            chord?.state = GLFW_PRESS
         }
     }
 
     fun onKeyRelease(key: Key) {
-        // Try to un-advance current pointer(s)
         matchingStates.removeAll { state ->
-            // The key that activated the current state pointer is released, cancel
-            if (state.parent?.children?.get(key) == state) {
-                releaseAllLeaf2Root(state)
-                true
-            } else {
-                false
+            when {
+                state.parent == null -> true
+                state.pathContainsKey(key) -> {
+                    state.relaseAllNodes()
+                    true
+                }
+                else -> false
             }
-        }
-    }
-
-    private fun releaseAllLeaf2Root(leaf: TriggerNode) {
-        var current: TriggerNode? = leaf
-        while (current != null) {
-            current.chord?.state = GLFW_RELEASE
-            current = current.parent
         }
     }
 
@@ -184,25 +199,51 @@ internal object TriggerTree {
     }
 }
 
-interface TriggerNode {
+private interface TriggerNode {
     val key: Key
-    var parent: TriggerNode?
-    var children: MutableMap<Key, TriggerNode>
-
+    val parent: TriggerNode?
+    val children: MutableMap<Key, TriggerNode>
     var chord: KeyChord?
+
+    fun pathContainsKey(key: Key): Boolean
+    fun relaseAllNodes()
 }
 
 private class BranchTriggerNode(
     override val key: Key,
-    override var parent: TriggerNode?
+    override val parent: TriggerNode?
 ) : TriggerNode {
-    override var children: MutableMap<Key, TriggerNode> = HashMap()
+    override val children: MutableMap<Key, TriggerNode> = HashMap()
     override var chord: KeyChord? = null
+
+    override fun pathContainsKey(key: Key): Boolean {
+        var current: TriggerNode? = this
+        while (current != null) {
+            if (current.key == key) {
+                return true
+            }
+            current = current.parent
+        }
+        return false
+    }
+
+    override fun relaseAllNodes() {
+        var current: TriggerNode? = this
+        while (current != null) {
+            current.chord?.state = GLFW_RELEASE
+            current = current.parent
+        }
+    }
 }
 
 private class RootTriggerNode : TriggerNode {
     override val key: Key = InputUtil.Type.KEYSYM.createFromCode(GLFW_KEY_UNKNOWN)
-    override var parent: TriggerNode? = null
-    override var children: MutableMap<Key, TriggerNode> = HashMap()
+    override val parent: TriggerNode? = null
+    override val children: MutableMap<Key, TriggerNode> = HashMap()
     override var chord: KeyChord? = null
+
+    override fun pathContainsKey(key: Key) = false
+
+    override fun relaseAllNodes() {
+    }
 }

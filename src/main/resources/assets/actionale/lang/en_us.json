@@ -1,3 +1,9 @@
 {
-  "gui.actinoale.radialMenu.title": "Radial menu"
+  "gui.actinoale.radialMenu.title": "Radial menu",
+  "text.autoconfig.actionale.option.exportNamedKeys": "Export named keycodes to option file",
+  "text.autoconfig.actionale.option.exportNamedKeys.@Tooltip": "Whether Actionale should write named keys (when true) or GLFW keycodes (when false)",
+  "text.autoconfig.actionale.option.radialMenuMinSides": "Minimum sides for radial menu",
+  "text.autoconfig.actionale.option.radialMenuMinSides.@Tooltip": "Minimum sides that a radial menu must have",
+  "text.autoconfig.actionale.option.leaderKey": "Leader keycode",
+  "text.autoconfig.actionale.option.leaderKey.@Tooltip": "GLFW keycode for leader key, defaults to '\\' (backslash)"
 }

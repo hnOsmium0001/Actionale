@@ -121,7 +121,7 @@ class Keymap(
             // Pressing streak failed, reset to beginning
             expectedIndex = 0
             // Retry from the start because the input might be the first key chord
-            this.onChordChanged(chord, action)
+//            this.onChordChanged(chord, action)
         }
     }
 

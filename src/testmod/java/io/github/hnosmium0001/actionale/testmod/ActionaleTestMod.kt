@@ -1,8 +1,8 @@
 package io.github.hnosmium0001.actionale.testmod
 
 import io.github.hnosmium0001.actionale.core.input.KeyChordManager
-import io.github.hnosmium0001.actionale.event.KeyInputCallback
 import io.github.hnosmium0001.actionale.core.input.Keymap
+import io.github.hnosmium0001.actionale.event.KeyInputCallback
 import io.github.hnosmium0001.actionale.event.MouseInputCallback
 import net.fabricmc.api.ModInitializer
 import net.minecraft.client.MinecraftClient
@@ -29,7 +29,7 @@ object ActionaleTestMod : ModInitializer {
             InputUtil.getKeyCode(GLFW.GLFW_KEY_LEFT_CONTROL, -1),
             InputUtil.getKeyCode(GLFW.GLFW_KEY_J, -1)
         )
-        ctrlJ.listeners.add { _, action ->
+        ctrlJ.listeners += { _, action ->
             println("Keychord Ctrl+J triggered as $action")
         }
 
@@ -70,15 +70,15 @@ object ActionaleTestMod : ModInitializer {
             )
         )
 
-        ctrlW_C.listeners.add { _, action ->
+        ctrlW_C.listeners += { _, action ->
             if (action == GLFW.GLFW_PRESS)
                 MinecraftClient.getInstance().player?.sendMessage(LiteralText("<C-w>c: close current panel"))
         }
-        gt.listeners.add { _, action ->
+        gt.listeners += { _, action ->
             if (action == GLFW.GLFW_PRESS)
                 MinecraftClient.getInstance().player?.sendMessage(LiteralText("gt: next tab"))
         }
-        gT.listeners.add { _, action ->
+        gT.listeners += { _, action ->
             if (action == GLFW.GLFW_PRESS)
                 MinecraftClient.getInstance().player?.sendMessage(LiteralText("gT: previous tab"))
         }
