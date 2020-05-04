@@ -1,7 +1,8 @@
 package io.github.hnosmium0001.actionale.core.ui
 
-import io.github.hnosmium0001.actionale.*
+import io.github.hnosmium0001.actionale.core.*
 import io.github.hnosmium0001.actionale.core.action.Action
+import io.github.hnosmium0001.actionale.modConfig
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.render.Tessellator
 import net.minecraft.client.render.VertexFormats
@@ -70,9 +71,9 @@ class RadialMenu(
         }
 
         if (hoveredVert1 != null && hoveredVert2 != null) {
-            buffer.vertex(center).next()
-            buffer.vertex(hoveredVert1).next()
-            buffer.vertex(hoveredVert2).next()
+            buffer.vertex(center).color(0xaa6b00ff.toInt()).next()
+            buffer.vertex(hoveredVert1).color(0xaa6b00ff.toInt()).next()
+            buffer.vertex(hoveredVert2).color(0xaa6b00ff.toInt()).next()
         }
 
         buffer.end()

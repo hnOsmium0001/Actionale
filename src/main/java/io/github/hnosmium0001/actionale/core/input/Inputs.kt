@@ -4,8 +4,8 @@ package io.github.hnosmium0001.actionale.core.input
 
 import com.google.common.collect.BiMap
 import com.google.common.collect.HashBiMap
-import io.github.hnosmium0001.actionale.firstOtherwise
-import io.github.hnosmium0001.actionale.mapInPlace
+import io.github.hnosmium0001.actionale.core.firstOtherwise
+import io.github.hnosmium0001.actionale.core.mapInPlace
 import io.github.hnosmium0001.actionale.modConfig
 import net.minecraft.client.resource.language.I18n
 import net.minecraft.client.util.InputUtil

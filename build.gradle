@@ -2,6 +2,7 @@ plugins {
     id 'fabric-loom' version '0.2.6-SNAPSHOT'
     id 'maven-publish'
     id 'org.jetbrains.kotlin.jvm' version '1.3.71'
+    id 'com.jfrog.bintray' version '1.8.5'
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -26,6 +27,7 @@ sourceSets {
 }
 
 repositories {
+    mavenCentral()
     maven {
         url = "http://maven.fabricmc.net/"
         name = "Fabric"
@@ -88,29 +90,33 @@ jar {
     from "LICENSE"
 }
 
-// configure the maven publication
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            // add all the jars that should be included when publishing to maven
-            artifact(remapJar) {
-                builtBy remapJar
-            }
-            artifact(sourcesJar) {
-                builtBy remapSourcesJar
-            }
+bintray {
+    user = findProperty('bintray.user')
+    key = findProperty('bintray.apiKey')
+    publications = ['BintrayPublication']
+    pkg {
+        repo = 'Maven'
+        name = 'actionale'
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/hnOsmium0001/Actionale.git'
+        version {
+            name = "$project.version"
+            released = new Date()
         }
     }
+}
 
-    // select the repositories you want to publish to
-    repositories {
-        // uncomment to publish to the local maven
-        // mavenLocal()
+publishing {
+    publications {
+        BintrayPublication(MavenPublication) {
+            artifact remapJar
+            groupId project.group
+            artifactId 'actionale'
+            version project.version
+        }
     }
 }
-repositories {
-    mavenCentral()
-}
+
 compileKotlin {
     kotlinOptions {
         jvmTarget = "1.8"

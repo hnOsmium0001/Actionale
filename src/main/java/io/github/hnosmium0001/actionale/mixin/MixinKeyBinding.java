@@ -18,7 +18,7 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
     /**
      * Remove notification to vanilla key binds, this will be done through migrated keymaps.
      *
-     * @see KeymapManager#generateMigrations(KeyBinding[])
+     * @see io.github.hnosmium0001.actionale.integration.VanillaIntegrationKt#generateVanillaMigrations(KeyBinding[])
      */
     @Overwrite
     public static void onKeyPressed(InputUtil.KeyCode key) {
@@ -30,7 +30,7 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
      * Note that we don't just direct this event because vanilla turns {@link org.lwjgl.glfw.GLFW#GLFW_REPEAT} events
      * into {@code pressed == true} which is not what we want (ignoring {@code GLFW_REPEAT} events completely).
      *
-     * @see KeymapManager#generateMigrations(KeyBinding[])
+     * @see io.github.hnosmium0001.actionale.integration.VanillaIntegrationKt#generateVanillaMigrations(KeyBinding[])
      */
     @Overwrite
     public static void setKeyPressed(InputUtil.KeyCode key, boolean pressed) {

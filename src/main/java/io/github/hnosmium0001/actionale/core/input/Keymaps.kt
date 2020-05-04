@@ -5,11 +5,10 @@ package io.github.hnosmium0001.actionale.core.input
 import com.google.common.base.Preconditions
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import io.github.hnosmium0001.actionale.IdentityHashListenerMap
-import io.github.hnosmium0001.actionale.ListenerMap
-import io.github.hnosmium0001.actionale.mixinextension.ExtendedKeyBinding
+import io.github.hnosmium0001.actionale.core.IdentityHashListenerMap
+import io.github.hnosmium0001.actionale.core.ListenerMap
+import io.github.hnosmium0001.actionale.core.pack
 import io.github.hnosmium0001.actionale.modConfig
-import io.github.hnosmium0001.actionale.pack
 import net.minecraft.client.options.KeyBinding
 import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
@@ -121,7 +120,7 @@ class Keymap(
             // Pressing streak failed, reset to beginning
             expectedIndex = 0
             // Retry from the start because the input might be the first key chord
-//            this.onChordChanged(chord, action)
+            this.onChordChanged(chord, action)
         }
     }
 
@@ -236,29 +235,6 @@ object KeymapManager {
     val keymapOverrides: MutableMap<String, Keymap> = HashMap()
 
     /**
-     * Generate and add migrated keymaps
-     */
-    fun generateMigrations(keyBindings: Array<out KeyBinding>) {
-        migratedKeymaps as MutableMap
-        for (keyBinding in keyBindings) {
-            val migration = Keymap(
-                name = keyBinding.id,
-                type = KeymapType.MIGRATED,
-                combination = arrayOf(KeyChordManager.obtain(keyBinding.defaultKeyCode))
-            )
-            migration.listeners += { _, action ->
-                keyBinding as ExtendedKeyBinding
-                when (action) {
-                    GLFW_PRESS -> keyBinding.press()
-                    GLFW_RELEASE -> keyBinding.release()
-                    else -> throw RuntimeException()
-                }
-            }
-            migratedKeymaps[keyBinding.id] = Pair(keyBinding, migration)
-        }
-    }
-
-    /**
      * Update key combination of the named migrated keymap. This should **NOT** be called by developers for
      * customization usages. Instead this is meant for syncing key combination when other mods tries to modify
      * [KeyBinding]'s key code
@@ -326,10 +302,7 @@ object KeymapManager {
                 type = KeymapType.fromTag(keymapData.get("type").asString)!!,
                 combination = deserializeKeymapCombinations(keymapData.get("combinations").asJsonArray)
             )
-            // Drop unmapped overrides
-            if (keymaps.contains(keymap.name)) {
-                keymaps[keymap.name] = keymap
-            }
+            keymaps[keymap.name] = keymap
             // ...
         }
     }

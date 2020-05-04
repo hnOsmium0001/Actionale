@@ -1,7 +1,7 @@
 package io.github.hnosmium0001.actionale.core.input
 
-import io.github.hnosmium0001.actionale.IdentityHashListenerMap
-import io.github.hnosmium0001.actionale.ListenerMap
+import io.github.hnosmium0001.actionale.core.IdentityHashListenerMap
+import io.github.hnosmium0001.actionale.core.ListenerMap
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 

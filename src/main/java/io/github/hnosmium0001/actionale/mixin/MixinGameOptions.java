@@ -1,7 +1,7 @@
 package io.github.hnosmium0001.actionale.mixin;
 
 import io.github.hnosmium0001.actionale.ActionaleOptionsKt;
-import io.github.hnosmium0001.actionale.core.input.KeymapManager;
+import io.github.hnosmium0001.actionale.integration.VanillaIntegrationKt;
 import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.options.KeyBinding;
 import org.spongepowered.asm.mixin.Final;
@@ -21,6 +21,6 @@ public class MixinGameOptions {
     @Inject(method = "load", at = @At("RETURN"))
     public void loadHook(CallbackInfo info) {
         ActionaleOptionsKt.readModData();
-        KeymapManager.INSTANCE.generateMigrations(keysAll);
+        VanillaIntegrationKt.generateVanillaMigrations(keysAll);
     }
 }

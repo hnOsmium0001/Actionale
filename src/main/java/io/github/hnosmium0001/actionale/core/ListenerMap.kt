@@ -1,4 +1,4 @@
-package io.github.hnosmium0001.actionale
+package io.github.hnosmium0001.actionale.core
 
 import java.util.*
 

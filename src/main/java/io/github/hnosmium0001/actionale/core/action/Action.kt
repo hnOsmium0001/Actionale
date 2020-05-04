@@ -1,14 +1,17 @@
+@file:Suppress("NAME_SHADOWING")
+
 package io.github.hnosmium0001.actionale.core.action
 
 import com.google.common.base.Preconditions
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
-import io.github.hnosmium0001.actionale.*
+import io.github.hnosmium0001.actionale.core.*
 import io.github.hnosmium0001.actionale.core.input.InputAction
 import io.github.hnosmium0001.actionale.core.input.Keymap
 import io.github.hnosmium0001.actionale.core.input.KeymapManager
 import io.github.hnosmium0001.actionale.core.ui.RadialMenu
+import io.github.hnosmium0001.actionale.modConfig
 import net.minecraft.client.MinecraftClient
 import net.minecraft.util.Identifier
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
