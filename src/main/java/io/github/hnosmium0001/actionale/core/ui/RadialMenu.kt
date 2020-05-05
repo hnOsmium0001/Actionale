@@ -6,7 +6,6 @@ import com.mojang.blaze3d.systems.RenderSystem
 import io.github.hnosmium0001.actionale.core.*
 import io.github.hnosmium0001.actionale.core.action.Action
 import io.github.hnosmium0001.actionale.modConfig
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.render.Tessellator
 import net.minecraft.client.render.VertexFormats
@@ -23,14 +22,12 @@ const val HALF_PI = Math.PI / 2
 
 class RadialMenu(
     val components: Array<out Action>,
-    val componentsPerPage: Int,
     title: Text
 ) : Screen(title) {
     constructor(
         components: Array<out Action>,
-        componentsPerPage: Int,
         trKey: String
-    ) : this(components, componentsPerPage, title = TranslatableText(trKey))
+    ) : this(components, title = TranslatableText(trKey))
 
     override fun render(mouseX: Int, mouseY: Int, delta: Float) {
         renderBackground()

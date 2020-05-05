@@ -81,7 +81,6 @@ class RadialMenuAction(
         if (action != GLFW_PRESS) return
         MinecraftClient.getInstance().openScreen(RadialMenu(
             components = this.subActions,
-            componentsPerPage = this.subActions.size.coerceAtLeast(modConfig.radialMenuMinSides),
             trKey = "gui.actinoale.radialMenu.title"
         ))
     }

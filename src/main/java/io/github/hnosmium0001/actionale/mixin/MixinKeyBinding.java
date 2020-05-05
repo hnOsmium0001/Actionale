@@ -19,6 +19,8 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
     /**
      * Remove notification to vanilla key binds, this will be done through migrated keymaps.
      *
+     * @author hnOsmium0001
+     * @reason See body
      * @see io.github.hnosmium0001.actionale.integration.VanillaIntegrationKt#generateVanillaMigrations(KeyBinding[])
      */
     @Overwrite
@@ -31,6 +33,8 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
      * Note that we don't just direct this event because vanilla turns {@link org.lwjgl.glfw.GLFW#GLFW_REPEAT} events
      * into {@code pressed == true} which is not what we want (ignoring {@code GLFW_REPEAT} events completely).
      *
+     * @author hnOsmium0001
+     * @reason See body
      * @see io.github.hnosmium0001.actionale.integration.VanillaIntegrationKt#generateVanillaMigrations(KeyBinding[])
      */
     @Overwrite
