@@ -13,8 +13,12 @@ class ActionaleConfigData : ConfigData {
     var exportNamedKeys = true
 
     @Tooltip
-    @BoundedDiscrete(min = 3L, max = 8L)
+    @BoundedDiscrete(min = 3L, max = 16L)
     var radialMenuMinSides = 6
+
+    @Tooltip
+    @BoundedDiscrete(min = 0L, max = 256)
+    var radialMenuRadius = 80
 
     @Tooltip
     var leaderKey = GLFW_KEY_BACKSLASH

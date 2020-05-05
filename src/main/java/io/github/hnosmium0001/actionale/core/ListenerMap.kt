@@ -2,13 +2,13 @@ package io.github.hnosmium0001.actionale.core
 
 import java.util.*
 
-interface ListenerMap<L : Any> : MutableMap<Any, L> {
+interface ListenerMap<L> : MutableMap<Any, L> where L : Any {
     operator fun plusAssign(listener: L) {
         this[listener] = listener
     }
 }
 
-class HashListenerMap<L : Any> : HashMap<Any, L>(), ListenerMap<L>
-class LinkedHashListenerMap<L : Any> : LinkedHashMap<Any, L>(), ListenerMap<L>
-class IdentityHashListenerMap<L : Any> : IdentityHashMap<Any, L>(), ListenerMap<L>
-class TreeListenerMap<L : Any> : TreeMap<Any, L>(), ListenerMap<L>
+class HashListenerMap<L> : HashMap<Any, L>(), ListenerMap<L> where L : Any
+class LinkedHashListenerMap<L> : LinkedHashMap<Any, L>(), ListenerMap<L> where L : Any
+class IdentityHashListenerMap<L> : IdentityHashMap<Any, L>(), ListenerMap<L> where L : Any
+class TreeListenerMap<L> : TreeMap<Any, L>(), ListenerMap<L> where L : Any

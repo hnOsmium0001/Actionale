@@ -13,6 +13,7 @@ import io.github.hnosmium0001.actionale.core.input.KeymapManager
 import io.github.hnosmium0001.actionale.core.ui.RadialMenu
 import io.github.hnosmium0001.actionale.modConfig
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.resource.language.I18n
 import net.minecraft.util.Identifier
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 
@@ -38,11 +39,11 @@ import org.lwjgl.glfw.GLFW.GLFW_PRESS
  * +----------------+----------------------+-------------------------+
  * ```
  *
- * @see [RadialMenuAction]
+ * @see RadialMenuAction
  */
 sealed class Action(
     val id: Identifier,
-    var name: String,
+    var name: String = I18n.translate("action.${id.toDotSeparated()}"),
     // Record the names instead of direct references to allow player-overrides
     val triggers: MutableSet<String> = HashSet()
 ) {
@@ -80,7 +81,7 @@ class RadialMenuAction(
         if (action != GLFW_PRESS) return
         MinecraftClient.getInstance().openScreen(RadialMenu(
             components = this.subActions,
-            componentsPerPage = modConfig.radialMenuMinSides,
+            componentsPerPage = this.subActions.size.coerceAtLeast(modConfig.radialMenuMinSides),
             trKey = "gui.actinoale.radialMenu.title"
         ))
     }
@@ -114,8 +115,8 @@ fun deserializeRadialMenuAction(data: JsonObject) =
             // ...
         },
         // JsonArray -> Action[]
-        subActions = data.get("subactions").asJsonArray.unpackArray { subaction ->
-            val id = Identifier(subaction.asString)
+        subActions = data.get("subactions").asJsonArray.unpackArray { subAction ->
+            val id = Identifier(subAction.asString)
             ActionManager.actions[id] ?: error("Invalid serialized data when trying to deserialize RadialMenuAction")
             // ...
         }

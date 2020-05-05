@@ -1,6 +1,7 @@
 package io.github.hnosmium0001.actionale.mixin;
 
 import io.github.hnosmium0001.actionale.core.input.KeymapManager;
+import io.github.hnosmium0001.actionale.integration.VanillaIntegrationKt;
 import io.github.hnosmium0001.actionale.mixinextension.ExtendedKeyBinding;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -50,7 +51,7 @@ public class MixinKeyBinding implements ExtendedKeyBinding {
      */
     @Inject(method = "setKeyCode", at = @At("RETURN"))
     public void setKeyCodeHook(InputUtil.KeyCode newKey, CallbackInfo info) {
-        KeymapManager.INSTANCE.updateMigration(id, newKey);
+        VanillaIntegrationKt.updateMigration(id, newKey);
     }
 
     @Override
