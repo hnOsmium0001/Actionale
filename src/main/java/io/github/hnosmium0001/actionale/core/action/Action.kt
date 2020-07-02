@@ -47,7 +47,7 @@ sealed class Action(
     // Record the names instead of direct references to allow player-overrides
     val triggers: MutableSet<String> = HashSet()
 ) {
-    var callback: (Keymap, InputAction) -> Unit = { _, _ -> }
+    var callback: (InputAction) -> Unit = { _ -> }
         set(value) {
             field = value
             for (name in triggers) {
@@ -74,7 +74,7 @@ class RadialMenuAction(
     val subActions: Array<Action>
 ) : Action(id, name, triggers) {
     init {
-        callback = { _, action -> this.openRadialMenu(action) }
+        callback = { action -> this.openRadialMenu(action) }
     }
 
     fun openRadialMenu(action: InputAction) {

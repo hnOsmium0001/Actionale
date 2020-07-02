@@ -5,12 +5,8 @@ package io.github.hnosmium0001.actionale.core.input
 import com.google.common.base.Preconditions
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import io.github.hnosmium0001.actionale.core.IdentityHashListenerMap
-import io.github.hnosmium0001.actionale.core.ListenerMap
-import io.github.hnosmium0001.actionale.core.pack
-import io.github.hnosmium0001.actionale.modConfig
+import io.github.hnosmium0001.actionale.core.*
 import net.minecraft.client.options.KeyBinding
-import net.minecraft.client.util.InputUtil
 import org.lwjgl.glfw.GLFW.GLFW_PRESS
 import org.lwjgl.glfw.GLFW.GLFW_RELEASE
 
@@ -45,6 +41,17 @@ enum class KeymapType(val tag: String) {
     }
 }
 
+sealed class KeymapLike {
+    abstract val name: String
+    abstract val type: KeymapType
+
+    /**
+     * Listeners to be called whenever this keymap changes state, i.e. from `PRESSED` to `RELEASED` or vice versa. Add
+     * or remove listeners according to the need.
+     */
+    val listeners: ListenerMap<(InputAction) -> Unit> = IdentityHashListenerMap()
+}
+
 /**
  * A keymap is an ordered combination of different key chords. It is "pressed" when all of the key chords are pressed in
  * the given order, and released when any of the key chords are released.
@@ -55,10 +62,10 @@ enum class KeymapType(val tag: String) {
  * @see KeymapType
  */
 class Keymap(
-    val name: String,
-    val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
+    override val name: String,
+    override val type: KeymapType = KeymapType.DEVELOPER_DEFINED,
     combination: Array<out KeyChord>
-) {
+) : KeymapLike() {
     var combination: Array<out KeyChord> = combination
         set(value) {
             // Remove the old listeners, add new listeners
@@ -71,22 +78,15 @@ class Keymap(
             field = value
         }
 
-    /**
-     * Listeners to be called whenever this keymap changes state, i.e. from `PRESSED` to `RELEASED` or vice versa. Add
-     * or remove listeners according to the need.
-     */
-    val listeners: ListenerMap<(Keymap, InputAction) -> Unit> = IdentityHashListenerMap()
     var state: InputAction = GLFW_RELEASE
         private set(value) {
             if (field != value) {
                 field = value
                 for (listener in listeners.values) {
-                    listener.invoke(this, value)
+                    listener.invoke(value)
                 }
             }
         }
-    val pressed get() = state == GLFW_PRESS
-    val released get() = state == GLFW_RELEASE
 
     init {
         Preconditions.checkArgument(combination.isNotEmpty())
@@ -138,28 +138,46 @@ class Keymap(
             .map { it.translate() }
             .joinToString { it }
     }
-}
 
-fun Keymap.copyWith(
-    newName: String? = null,
-    newType: KeymapType? = null,
-    newCombination: Array<out KeyChord>? = null,
-    transferListeners: Boolean = false
-): Keymap {
-    val updated = Keymap(
-        name = newName ?: this.name,
-        type = newType ?: this.type,
-        combination = newCombination ?: this.combination
-    )
-    if (transferListeners) {
-        for (listener in this.listeners.values) {
-            updated.listeners += listener
+    fun copyWith(
+        newName: String? = null,
+        newType: KeymapType? = null,
+        newCombination: Array<out KeyChord>? = null,
+        transferListeners: Boolean = false
+    ): Keymap {
+        val updated = Keymap(
+            name = newName ?: this.name,
+            type = newType ?: this.type,
+            combination = newCombination ?: this.combination
+        )
+        if (transferListeners) {
+            for (listener in this.listeners.values) {
+                updated.listeners += listener
+            }
         }
+        return updated
     }
-    return updated
+
+    fun copy() = this.copyWith(transferListeners = true)
 }
 
-fun Keymap.copy() = this.copyWith(transferListeners = true)
+class SimpleKeymap(
+    override val name: String,
+    override val type: KeymapType,
+    val key: KeyCode
+) : KeymapLike() {
+    var state: InputAction = GLFW_RELEASE
+        set(value) {
+            if (field != value) {
+                field = value
+                for (listener in listeners.values) {
+                    listener.invoke(value)
+                }
+            }
+        }
+    val pressed get() = state == GLFW_PRESS
+    val released get() = state == GLFW_RELEASE
+}
 
 object KeymapManager {
     /**
@@ -187,10 +205,10 @@ object KeymapManager {
     val keymapOverrides: MutableMap<String, Keymap> = object : HashMap<String, Keymap>() {
         override fun put(key: String, value: Keymap): Keymap? {
             // This method call mutates this map already
-            val result = super.put(key, value)
+            val old = super.put(key, value)
 
             // If this put operation overrides an original value, transfer listeners from the overridden value instead
-            val source = result ?: migratedKeymaps[key]?.second
+            val source = old ?: migratedKeymaps[key]?.second
             source?.run {
                 // Transfer bindings to the override
                 val it = this.listeners.values.iterator()
@@ -200,16 +218,31 @@ object KeymapManager {
                 }
             }
 
-            return result
+            return old
         }
     }
+    // TODO disable listeners for overridden keymaps
 
-    fun registerKeymap(name: String, keymap: Keymap) {
+    val simpleKeymaps: Map<String, SimpleKeymap> = HashMap()
+    val simpleKeymapsByKey: Map<KeyCode, SimpleKeymap> = HashMap()
+    // TODO simple keymap overriding
+
+    fun registerKeymap(name: String, keymap: KeymapLike) {
         Preconditions.checkArgument(keymap.type == KeymapType.DEVELOPER_DEFINED)
         Preconditions.checkArgument(!keymaps.containsKey(name))
 
         keymaps as MutableMap
-        keymaps[name] = keymap
+        when (keymap) {
+            is Keymap -> {
+                keymaps[name] = keymap
+            }
+            is SimpleKeymap -> {
+                simpleKeymaps as MutableMap
+                simpleKeymaps[keymap.name] = keymap
+                simpleKeymapsByKey as MutableMap
+                simpleKeymapsByKey[keymap.key] = keymap
+            }
+        }
     }
 
     operator fun get(name: String): Keymap? {
@@ -230,36 +263,61 @@ object KeymapManager {
         }
     }
 
-    fun serialize() =
-        keymapOverrides.entries.pack<Map.Entry<String, Keymap>, JsonObject> { (_, keymap) ->
+    fun serializeOverrides() =
+        keymapOverrides.packMap { _, keymap ->
             // Keymap -> JsonObject
             // The `name` map key and the `type` is pretended to be a part of a Keymap
             JsonObject().also { keymapData ->
+                // Don't save the type since overrides always have `KeymapType.USER_DEFINED`
                 keymapData.addProperty("name", keymap.name)
-                // Currently discarded, reserved for future uses
-                keymapData.addProperty("type", keymap.type.tag)
                 keymapData.add("combinations", keymap.serializeCombinations())
             }
             // ...
         }
 
-    fun deserialize(data: JsonArray) {
+    fun deserializeOverrides(data: JsonArray) {
         for (keymapData in data) {
             // JsonObject -> Keymap
             // The `name` map key and the `type` is pretended to be a part of a Keymap
             val keymapData = keymapData.asJsonObject
             val keymap = Keymap(
                 name = keymapData.get("name").asString,
-                type = KeymapType.fromTag(keymapData.get("type").asString)!!,
+                type = KeymapType.USER_DEFINED,
                 combination = deserializeKeymapCombinations(keymapData.get("combinations").asJsonArray)
             )
             keymapOverrides[keymap.name] = keymap
             // ...
         }
     }
+
+    fun serializeSimpleOverrides() =
+        simpleKeymapsByKey.packMap { _, keymap ->
+            // Simple -> JsonObject
+            JsonObject().also { keymapData ->
+                keymapData.addProperty("name", keymap.name)
+                keymapData.addProperty("key", keymap.key)
+            }
+            // ...
+        }
+
+    fun deserializeSimpleOverrides(data: JsonArray) {
+        simpleKeymaps as MutableMap
+        simpleKeymapsByKey as MutableMap
+        for (keymapData in data) {
+            // JsonObject -> SimpleKeymap
+            val keymapData = keymapData.asJsonObject
+            val keymap = SimpleKeymap(
+                name = keymapData.get("name").asString,
+                type = KeymapType.USER_DEFINED,
+                key = keymapData.get("key").asInt
+            )
+            simpleKeymaps[keymap.name] = keymap
+            simpleKeymapsByKey[keymap.key] = keymap
+        }
+    }
 }
 
-fun Keymap.serializeCombinations() =
+private fun Keymap.serializeCombinations() =
     // KeyChord[] -> JsonArray
     combination.pack { chord ->
         // KeyChord -> JsonObject
@@ -267,22 +325,14 @@ fun Keymap.serializeCombinations() =
             // Key[] -> JsonArray
             chordData.add("keys", chord.keys.pack { key ->
                 // Key -> JsonObject
-                JsonObject().also { keyData ->
-                    if (modConfig.exportNamedKeys) {
-                        keyData.addProperty("type", key.categoryName)
-                        keyData.addProperty("keycode", key.indicator)
-                    } else {
-                        keyData.addProperty("type", key.category.ordinal)
-                        keyData.addProperty("keycode", key.keyCode)
-                    }
-                }
+                key.toJsonObject()
                 // ...
             })
         }
         // ...
     }
 
-fun deserializeKeymapCombinations(data: JsonArray) =
+private fun deserializeKeymapCombinations(data: JsonArray) =
     // JsonArray -> KeyChord[]
     Array(data.size()) { chordIdx ->
         // JsonObject -> KeyChord
@@ -291,21 +341,19 @@ fun deserializeKeymapCombinations(data: JsonArray) =
             // JsonArray -> Key[]
             KeyChordManager.obtain(*Array(keysData.size()) { keyIdx ->
                 // JsonObject -> Key
-                keysData.get(keyIdx).asJsonObject.let { keyData ->
-                    val typeJson = keyData.get("type").asJsonPrimitive
-                    val keyCodeJson = keyData.get("keycode").asJsonPrimitive
-
-                    when {
-                        typeJson.isNumber && keyCodeJson.isNumber ->
-                            InputUtil.Type.values()[typeJson.asInt].createFromCode(keyCodeJson.asInt)
-                        typeJson.isString && keyCodeJson.isString ->
-                            keyFrom(typeJson.asString, keyCodeJson.asString)
-                        else ->
-                            throw RuntimeException()
-                    }
-                }
+                keysData.get(keyIdx).asKey
                 // ...
             })
         }
         // ...
     }
+
+internal object SimpleKeymapTriggerer {
+    fun onKeyPress(key: Key) {
+        KeymapManager.simpleKeymapsByKey[key.keyCode]?.state = GLFW_PRESS
+    }
+
+    fun onKeyRelease(key: Key) {
+        KeymapManager.simpleKeymapsByKey[key.keyCode]?.state = GLFW_RELEASE
+    }
+}
