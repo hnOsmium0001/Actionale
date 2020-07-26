@@ -1,5 +1,6 @@
 [![Available Versions](http://cf.way2muchnoise.eu/versions/actionale.svg)](https://www.curseforge.com/minecraft/mc-mods/actionale)
 [![Downloads](http://cf.way2muchnoise.eu/full_actionale_downloads.svg)](https://www.curseforge.com/minecraft/mc-mods/actionale)
+[![Gitter](https://badges.gitter.im/hnOsmium0001/Actionale.png)](https://gitter.im/hnOsmium0001/Actionale)
 
 # Actionale
 
